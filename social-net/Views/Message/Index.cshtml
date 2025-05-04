@@ -1,0 +1,55 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using social_net.Data
+@model social_net.Models.User
+@{
+}
+
+@inject UserManager<User> UserManager
+@inject social_net.Data.AppDbContext _appDbContext;
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    currentUser = await _appDbContext.Users
+        .Include(u => u.SentMessages)
+        .FirstOrDefaultAsync(u => u.Id.Equals(currentUser.Id));
+}
+
+<h3> Conversation with @Model.FirstName @Model.LastName </h3>
+
+<section id ="messageContainer">
+    @{
+        var messagesToProfileUser = currentUser.SentMessages.FindAll(msg => msg.ReceiverId == Model.Id).ToList();
+        var messagesFromProfileUser = Model.SentMessages.FindAll(msg => msg.ReceiverId == currentUser.Id).ToList();
+        var allMessages = messagesToProfileUser.Concat(messagesFromProfileUser).ToList();
+        allMessages.Sort((msg1, msg2) => msg1.SentAt.CompareTo(msg2.SentAt));
+    }
+    @foreach (var message in allMessages)
+    {
+        <article>
+            <b>@message.Sender.FirstName @message.Sender.LastName </b> @@ @message.SentAt: @message.Content 
+        </article>
+        <hr />
+    }
+</section>
+
+<form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-profileUserId="@Model.Id" method="post">
+    <div id="bottom" class="form-floating mb-3">
+        <input class="form-control" name="messageContent" autocomplete="off"/>
+        <label>Press Enter to send a new message to @Model.FirstName @Model.LastName </label>
+    </div>
+</form>
+
+
+<style>
+    html {
+        scroll-behavior: auto !important;
+    }
+</style>
+
+<script>
+    window.onload = () => {
+        const el = document.getElementById("bottom");
+        if (el) el.scrollIntoView({ behavior: "auto" });
+    };
+</script>

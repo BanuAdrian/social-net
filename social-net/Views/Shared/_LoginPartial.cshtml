@@ -1,0 +1,74 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using social_net.Models
+
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+@inject social_net.Data.AppDbContext _appDbContext;
+
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        var currentUser = await UserManager.GetUserAsync(User);
+        currentUser = await _appDbContext.Users
+        @* .Include(u => u.SentFriendRequests) *@
+        @* .ThenInclude(fr => fr.Sender) *@
+            .Include(u => u.ReceivedFriendRequests)
+            .ThenInclude(fr => fr.Sender)
+            .Include(u => u.InitiatedFriendships)
+            .Include(u => u.ReceivedFriendships)
+            .FirstOrDefaultAsync(u => u.Id.Equals(currentUser.Id));
+
+        await _appDbContext.Friendships
+            .Include(f => f.InitiatorUser)
+            .Include(f => f.RecipientUser)
+            .Where(f => f.InitiatorUserId == currentUser.Id || f.RecipientUserId == currentUser.Id)
+            .ToListAsync();
+
+
+        <li class="nav-item dropdown"> 
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false"> 
+                 Friend Requests
+             </a> 
+             <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink"> 
+                 @foreach (var friendRequest in currentUser.ReceivedFriendRequests) 
+                 {
+                    <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@friendRequest.SenderId">@friendRequest.Sender.FirstName @friendRequest.Sender.LastName</a></li>
+                 } 
+             </ul>
+        </li>
+
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Friends
+            </a>
+            <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink">
+                @foreach (var friend in currentUser.Friends)
+                {
+                    <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@friend.Id">@friend.FirstName @friend.LastName</a></li>
+                }
+            </ul>
+        </li>
+    <li class="nav-item">
+        @* <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@currentUser.FirstName @currentUser.LastName</a> *@
+            <a id="manage" class="nav-link text-dark" asp-area="" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@currentUser.Id">@currentUser.FirstName @currentUser.LastName</a>
+
+    </li>
+    <li class="nav-item">
+        <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
+        </form>
+    </li>
+        
+}
+else
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+    </li>
+}
+</ul>
