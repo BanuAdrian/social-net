@@ -27,7 +27,7 @@
     {
         <p> You are friends! </p>
         @* <button class="btn btn-primary" asp-controller="Message" asp-action="Index" asp-route-profileUserId="@Model.Id">Message</button> *@
-        <a class="btn btn-primary" asp-controller="Message" asp-action="Index" asp-route-profileUserId="@Model.Id">Message</a>
+        <a class="btn btn-primary" asp-action="MessageBox" asp-route-profileUserId="@Model.Id">Message</a>
     } 
     else
     {

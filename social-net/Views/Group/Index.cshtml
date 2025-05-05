@@ -26,7 +26,7 @@
 @if (currentUser != null && currentUser.Groups.Contains(Model))
 {
     @* <h2> You are a member of this group </h2> *@
-    @* <a class="btn btn-primary" asp-controller="Message" asp-action="Index" asp-route-groupId="@Model.Id">Message</a> *@
+    <a class="btn btn-primary" asp-action="MessageBox" asp-route-groupId="@Model.Id">Message</a>
 
 } else if ( currentUser != null && !currentUser.Groups.Contains(Model) )
 {

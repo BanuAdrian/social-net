@@ -17,7 +17,7 @@
 
 <h3> Conversation with @Model.FirstName @Model.LastName </h3>
 
-<section id ="messageContainer">
+<section id="messageContainer">
     @{
         var messagesToProfileUser = currentUser.SentMessages.FindAll(msg => msg.ReceiverId == Model.Id).ToList();
         var messagesFromProfileUser = Model.SentMessages.FindAll(msg => msg.ReceiverId == currentUser.Id).ToList();
@@ -27,7 +27,7 @@
     @foreach (var message in allMessages)
     {
         <article>
-            <b>@message.Sender.FirstName @message.Sender.LastName </b> @@ @message.SentAt: @message.Content 
+            <b>@message.Sender.FirstName @message.Sender.LastName </b> @@ @message.SentAt: @message.Content
         </article>
         <hr />
     }
@@ -35,7 +35,7 @@
 
 <form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-profileUserId="@Model.Id" method="post">
     <div id="bottom" class="form-floating mb-3">
-        <input class="form-control" name="messageContent" autocomplete="off"/>
+        <input class="form-control" name="messageContent" autocomplete="off" />
         <label>Press Enter to send a new message to @Model.FirstName @Model.LastName </label>
     </div>
 </form>

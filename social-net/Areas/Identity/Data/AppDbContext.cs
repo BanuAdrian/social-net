@@ -13,6 +13,7 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<FriendsMessage> FriendsMessages { get; set; }
     public DbSet<Group> Groups { get; set; }
     public DbSet<GroupMembership> GroupMemberships { get; set; }
+    public DbSet<GroupMessage> GroupMessages { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
