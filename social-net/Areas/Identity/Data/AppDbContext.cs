@@ -15,6 +15,9 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<GroupMembership> GroupMemberships { get; set; }
     public DbSet<GroupMessage> GroupMessages { get; set; }
     public DbSet<TextPost> TextPosts { get; set; }
+    public DbSet<PhotoAlbum> PhotoAlbums { get; set; }
+    public DbSet<Photo> Photos { get; set; }
+    public DbSet<PhotoComment> PhotoComments { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -122,6 +125,22 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(t => t.User)
             .WithMany(u => u.TextPosts)
             .HasForeignKey(t => t.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PhotoAlbum>().ToTable("PhotoAlbums");
+        builder.Entity<Photo>().ToTable("Photos");
+        builder.Entity<PhotoComment>().ToTable("PhotoComments");
+
+        builder.Entity<PhotoComment>()
+            .HasOne(pc => pc.User)
+            .WithMany(u => u.PhotoComments)
+            .HasForeignKey(pc => pc.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PhotoComment>()
+            .HasOne(pc => pc.Photo)
+            .WithMany(p => p.Comments)
+            .HasForeignKey(pc => pc.PhotoId)
             .OnDelete(DeleteBehavior.Restrict);
 
     }

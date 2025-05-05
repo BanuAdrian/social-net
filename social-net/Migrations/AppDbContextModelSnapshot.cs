@@ -284,6 +284,84 @@ namespace social_net.Migrations
                     b.ToTable("GroupMessages", (string)null);
                 });
 
+            modelBuilder.Entity("social_net.Models.Photo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlbumId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlbumId");
+
+                    b.ToTable("Photos", (string)null);
+                });
+
+            modelBuilder.Entity("social_net.Models.PhotoAlbum", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("PostedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PhotoAlbums", (string)null);
+                });
+
+            modelBuilder.Entity("social_net.Models.PhotoComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsAccepted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PhotoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PhotoId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PhotoComments", (string)null);
+                });
+
             modelBuilder.Entity("social_net.Models.TextPost", b =>
                 {
                     b.Property<int>("Id")
@@ -540,6 +618,47 @@ namespace social_net.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("social_net.Models.Photo", b =>
+                {
+                    b.HasOne("social_net.Models.PhotoAlbum", "Album")
+                        .WithMany("Photos")
+                        .HasForeignKey("AlbumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Album");
+                });
+
+            modelBuilder.Entity("social_net.Models.PhotoAlbum", b =>
+                {
+                    b.HasOne("social_net.Models.User", "User")
+                        .WithMany("PhotoAlbums")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("social_net.Models.PhotoComment", b =>
+                {
+                    b.HasOne("social_net.Models.Photo", "Photo")
+                        .WithMany("Comments")
+                        .HasForeignKey("PhotoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("social_net.Models.User", "User")
+                        .WithMany("PhotoComments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Photo");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("social_net.Models.TextPost", b =>
                 {
                     b.HasOne("social_net.Models.User", "User")
@@ -558,6 +677,16 @@ namespace social_net.Migrations
                     b.Navigation("ReceivedMessages");
                 });
 
+            modelBuilder.Entity("social_net.Models.Photo", b =>
+                {
+                    b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("social_net.Models.PhotoAlbum", b =>
+                {
+                    b.Navigation("Photos");
+                });
+
             modelBuilder.Entity("social_net.Models.User", b =>
                 {
                     b.Navigation("GroupMemberships");
@@ -565,6 +694,10 @@ namespace social_net.Migrations
                     b.Navigation("GroupsSentMessages");
 
                     b.Navigation("InitiatedFriendships");
+
+                    b.Navigation("PhotoAlbums");
+
+                    b.Navigation("PhotoComments");
 
                     b.Navigation("ReceivedFriendRequests");
 

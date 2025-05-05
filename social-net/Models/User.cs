@@ -41,5 +41,9 @@ namespace social_net.Models
         //public List<GroupMessage> GroupsReceivedMessages { get; set; } = new();
 
         public List<TextPost> TextPosts { get; set; } = new();
+
+        public List<PhotoAlbum> PhotoAlbums { get; set; } = new();
+
+        public List<PhotoComment> PhotoComments { get; set; } = new();
     }
 }

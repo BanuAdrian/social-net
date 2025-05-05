@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Azure.Messaging;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using social_net.Data;
@@ -25,6 +26,8 @@ namespace social_net.Controllers
                 .Include(u => u.InitiatedFriendships)
                 .Include(u => u.ReceivedFriendships)
                 .Include(u => u.TextPosts.OrderByDescending(t => t.PostedAt))
+                .Include(u => u.PhotoAlbums)
+                .ThenInclude(p => p.Photos)
                 .ToList()
                 .Find(u => u.Id.Equals(profileUserId));
             //Console.WriteLine("S-a intrat in functia Index(), userId = " + userId);
@@ -163,7 +166,7 @@ namespace social_net.Controllers
             //Console.WriteLine("Message: profileUserId = " + profileUserId);
             Console.WriteLine("MESAJ: " + messageContent);
 
-            var msg = new FriendsMessage { Sender = currentUser, Receiver = profileUser, Content = messageContent, SentAt = DateTime.UtcNow };
+            var msg = new FriendsMessage { Sender = currentUser, Receiver = profileUser, Content = messageContent, SentAt = DateTime.Now };
 
             _appDbContext.FriendsMessages.Add(msg);
             _appDbContext.SaveChanges();
@@ -187,5 +190,40 @@ namespace social_net.Controllers
             return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
         }
 
+        [HttpPost]
+        public IActionResult CreateAlbum(List<IFormFile> photos, string currentUserId)
+        {
+            if (photos == null || !photos.Any())
+            {
+                ModelState.AddModelError("", "Please select at least one photo.");
+                return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+            }
+
+            var currentUser = _appDbContext.Users
+                .FirstOrDefault(u => u.Id.Equals(currentUserId));
+
+            var album = new PhotoAlbum { User = currentUser, PostedAt = DateTime.UtcNow };
+            _appDbContext.PhotoAlbums.Add(album);
+            _appDbContext.SaveChanges();
+
+            var userPhotosFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/users-photos", currentUserId);
+            Directory.CreateDirectory(userPhotosFolder);
+            //Console.WriteLine(photosFolder);
+
+            foreach (var photoFile in photos)
+            {
+                if (photoFile.Length > 0)
+                {
+                    var filePath = Path.Combine(userPhotosFolder, photoFile.FileName);
+                    var stream = new FileStream(filePath, FileMode.Create);
+                    photoFile.CopyTo(stream);
+                    var photo = new Photo { Album = album, ImagePath = "/users-photos/" + currentUserId + "/" + photoFile.FileName};
+                    _appDbContext.Photos.Add(photo);
+                }
+            }
+
+            _appDbContext.SaveChanges();
+            return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+        }
     }
 }

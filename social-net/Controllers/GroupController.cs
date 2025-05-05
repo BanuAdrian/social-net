@@ -95,7 +95,7 @@ namespace social_net.Controllers
             //Console.WriteLine("Message: profileUserId = " + profileUserId);
             Console.WriteLine("MESAJ: " + messageContent);
 
-            var msg = new GroupMessage { Sender = currentUser, Group = group, Content = messageContent, SentAt = DateTime.UtcNow };
+            var msg = new GroupMessage { Sender = currentUser, Group = group, Content = messageContent, SentAt = DateTime.Now };
 
             _appDbContext.GroupMessages.Add(msg);
             _appDbContext.SaveChanges();

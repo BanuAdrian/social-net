@@ -21,6 +21,13 @@
 			<label>What's on your mind, @currentUser.FirstName?</label>
 		</div>
 	</form>
+
+	<h3>Create album</h3>
+	<form asp-action="CreateAlbum" asp-route-currentUserId="@currentUser.Id" method="post" enctype="multipart/form-data">
+		<input type="file" name="photos" class="form-control" multiple />
+		<button type="submit" class="btn btn-primary">Create Album</button>
+	</form>
+
 }
 else if (currentUser != null)
 {
@@ -75,4 +82,16 @@ else if (currentUser != null)
 		<p>@textPost.PostedAt</p>
 		<p>@textPost.Text</p>
 	</div>
+}
+
+<h3>Albums</h3>
+@foreach (var photoAlbum in Model.PhotoAlbums)
+{
+	<h5>Album created on @photoAlbum.PostedAt</h5>
+	@foreach (var photo in photoAlbum.Photos)
+	{
+		<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"><img src="@photo.ImagePath" alt="Photo" style="width: 150px; height: 150px; margin: 5px;" /></a>
+		<br />
+	}
+	<br />
 }
