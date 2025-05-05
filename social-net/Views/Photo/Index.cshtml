@@ -13,13 +13,21 @@
 }
 
 <h1>Photo posted by @Model.Album.User.FirstName @Model.Album.User.LastName</h1>
-<img src="@Model.ImagePath" alt="Photo" style="margin-bottom: 25px" />
+<img src="@Model.ImagePath" alt="Photo"  style="margin-bottom: 25px" />
 
 @foreach (var comment in Model.Comments)
 {
     <article>
-        <b>@comment.User.FirstName @comment.User.LastName </b> @@ @comment.AddedAt: @comment.Text
+        @if (Model.Album.User == currentUser && comment.User != currentUser && !comment.IsAccepted)
+        {
+            <a asp-action="AcceptComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Accept</a> <a asp-action="DeclineComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Decline</a>
+        } 
+        @if (Model.Album.User == currentUser || comment.IsAccepted)
+        {
+            <p><b>  @comment.User.FirstName @comment.User.LastName </b>@@ @comment.AddedAt @comment.Text</p>
+        }
     </article>
+    
 }
 
 

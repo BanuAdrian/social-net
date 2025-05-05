@@ -31,18 +31,42 @@ namespace social_net.Controllers
         public IActionResult AddComment(string commentContent, int photoId, string currentUserId)
         {
             var photo = _appDbContext.Photos
-            .FirstOrDefault(p => p.Id.Equals(photoId));
+                .Include(p => p.Album)
+                .FirstOrDefault(p => p.Id.Equals(photoId));
 
             var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
 
             // DE ADAUGAT IS ACCEPTED FEATURE
-            var comment = new PhotoComment { User = currentUser, Text = commentContent, Photo = photo, AddedAt = DateTime.Now };
+            var comment = new PhotoComment { User = currentUser, Text = commentContent, Photo = photo, AddedAt = DateTime.Now, IsAccepted = (currentUser == photo.Album.User) ? true : false };
 
             _appDbContext.PhotoComments.Add(comment);
             _appDbContext.SaveChanges();
 
             return RedirectToAction("Index", "Photo", new { photoId = photoId });
+        }
 
+        public IActionResult AcceptComment(int photoId, int commentId)
+        {
+            var comment = _appDbContext.PhotoComments
+                .FirstOrDefault(c => c.Id.Equals(commentId));
+
+            comment.IsAccepted = true;
+
+            _appDbContext.PhotoComments.Update(comment);
+            _appDbContext.SaveChanges();
+
+            return RedirectToAction("Index", "Photo", new { photoId = photoId });
+        }
+
+        public IActionResult DeclineComment(int photoId, int commentId)
+        {
+            var comment = _appDbContext.PhotoComments
+                .FirstOrDefault(c => c.Id.Equals(commentId));
+
+            _appDbContext.PhotoComments.Remove(comment);
+            _appDbContext.SaveChanges();
+
+            return RedirectToAction("Index", "Photo", new { photoId = photoId });
         }
     }
 }

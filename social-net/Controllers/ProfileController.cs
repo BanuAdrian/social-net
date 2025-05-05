@@ -35,6 +35,7 @@ namespace social_net.Controllers
             Console.WriteLine("S-a primit string-ul: " + profileUserId);
             if (profileUser != null)
             {
+                profileUser.PhotoAlbums = profileUser.PhotoAlbums.OrderByDescending(pa => pa.PostedAt).ToList();
                 return View(profileUser);
             }
             return RedirectToAction("Index", "Home");
