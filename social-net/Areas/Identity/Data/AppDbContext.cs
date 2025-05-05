@@ -11,6 +11,8 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<FriendRequest> FriendRequests { get; set; }
     public DbSet<Friendship> Friendships { get; set; }
     public DbSet<FriendsMessage> FriendsMessages { get; set; }
+    public DbSet<Group> Groups { get; set; }
+    public DbSet<GroupMembership> GroupMemberships { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -76,6 +78,39 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(msg => msg.Receiver)
             .WithMany(u => u.ReceivedMessages)
             .HasForeignKey(msg => msg.ReceiverId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Group>().ToTable("Groups");
+        builder.Entity<GroupMembership>().ToTable("GroupMemberships");
+        builder.Entity<GroupMembership>()
+            .HasKey(gm => new { gm.GroupId, gm.UserId });
+
+        builder.Entity<GroupMembership>()
+            .HasOne(gm => gm.Member)
+            .WithMany(u => u.GroupMemberships)
+            .HasForeignKey(gm => gm.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GroupMembership>()
+            .HasOne(gm => gm.Group)
+            .WithMany(gr => gr.GroupMemberships)
+            .HasForeignKey(gm => gm.GroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
+
+        builder.Entity<GroupMessage>().ToTable("GroupMessages");
+
+        builder.Entity<GroupMessage>()
+            .HasOne(gmsg => gmsg.Sender)
+            .WithMany(u => u.GroupsSentMessages)
+            .HasForeignKey(gmsg => gmsg.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GroupMessage>()
+            .HasOne(gmsg => gmsg.Group)
+            .WithMany(g => g.ReceivedMessages)
+            .HasForeignKey(gmsg => gmsg.GroupId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

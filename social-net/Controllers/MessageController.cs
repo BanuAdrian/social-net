@@ -29,7 +29,6 @@ namespace social_net.Controllers
             return View(profileUser);
 
             //return Redirect(Url.RouteUrl(new { controller = "Message", action = "Index", profileUserId = profileUserId }) + "#" + "bottom");
-
         }
 
         [HttpPost]

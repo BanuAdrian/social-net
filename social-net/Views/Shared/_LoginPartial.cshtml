@@ -12,9 +12,9 @@
     {
         var currentUser = await UserManager.GetUserAsync(User);
         currentUser = await _appDbContext.Users
-        @* .Include(u => u.SentFriendRequests) *@
-        @* .ThenInclude(fr => fr.Sender) *@
-            .Include(u => u.ReceivedFriendRequests)
+    @* .Include(u => u.SentFriendRequests) *@
+    @* .ThenInclude(fr => fr.Sender) *@
+    .Include(u => u.ReceivedFriendRequests)
             .ThenInclude(fr => fr.Sender)
             .Include(u => u.InitiatedFriendships)
             .Include(u => u.ReceivedFriendships)
@@ -26,6 +26,23 @@
             .Where(f => f.InitiatorUserId == currentUser.Id || f.RecipientUserId == currentUser.Id)
             .ToListAsync();
 
+        var allGroups = await _appDbContext.Groups.ToListAsync();
+
+        <li class="nav-item dropdown"> 
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false"> 
+                 All Groups
+             </a> 
+             <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink"> 
+                 @foreach (var group in allGroups) 
+                 {
+                    <li><a class="dropdown-item" asp-controller="Group" asp-action="Index" asp-route-groupId="@group.Id">@group.Name</a></li>
+                 } 
+             </ul>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Group" asp-action="CreateGroup" asp-route-currentUserId="@currentUser.Id">Create a new Group</a>
+        </li>
 
         <li class="nav-item dropdown"> 
             <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false"> 

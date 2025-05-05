@@ -30,5 +30,14 @@ namespace social_net.Models
 
         public List<FriendsMessage> SentMessages { get; set; } = new();
         public List<FriendsMessage> ReceivedMessages { get; set; } = new();
+
+        public List<GroupMembership> GroupMemberships { get; set; } = new();
+
+        [NotMapped]
+        public List<Group> Groups => GroupMemberships.Select(gm => gm.Group).ToList();
+
+        public List<GroupMessage> GroupsSentMessages { get; set; } = new();
+
+        //public List<GroupMessage> GroupsReceivedMessages { get; set; } = new();
     }
 }

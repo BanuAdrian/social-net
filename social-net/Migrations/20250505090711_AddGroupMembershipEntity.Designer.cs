@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using social_net.Data;
 
@@ -11,9 +12,11 @@ using social_net.Data;
 namespace social_net.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250505090711_AddGroupMembershipEntity")]
+    partial class AddGroupMembershipEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -253,37 +256,6 @@ namespace social_net.Migrations
                     b.ToTable("GroupMemberships", (string)null);
                 });
 
-            modelBuilder.Entity("social_net.Models.GroupMessage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("GroupId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SenderId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("GroupMessages", (string)null);
-                });
-
             modelBuilder.Entity("social_net.Models.User", b =>
                 {
                     b.Property<string>("Id")
@@ -495,37 +467,14 @@ namespace social_net.Migrations
                     b.Navigation("Member");
                 });
 
-            modelBuilder.Entity("social_net.Models.GroupMessage", b =>
-                {
-                    b.HasOne("social_net.Models.Group", "Group")
-                        .WithMany("ReceivedMessages")
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("social_net.Models.User", "Sender")
-                        .WithMany("GroupsSentMessages")
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Group");
-
-                    b.Navigation("Sender");
-                });
-
             modelBuilder.Entity("social_net.Models.Group", b =>
                 {
                     b.Navigation("GroupMemberships");
-
-                    b.Navigation("ReceivedMessages");
                 });
 
             modelBuilder.Entity("social_net.Models.User", b =>
                 {
                     b.Navigation("GroupMemberships");
-
-                    b.Navigation("GroupsSentMessages");
 
                     b.Navigation("InitiatedFriendships");
 

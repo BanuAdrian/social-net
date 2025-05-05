@@ -1,0 +1,28 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model social_net.Models.Group
+@{
+}
+
+@inject UserManager<User> UserManager
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+}
+
+
+<div class="row">
+    <div class="col-md-4">
+        <form method="post" asp-action="CreateGroup" asp-route-currentUserId="@currentUser.Id">
+            <h2>Create a new group.</h2>
+            <hr />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="form-floating mb-3">
+                <input asp-for="@Model.Name" class="form-control" aria-required="true" />
+                <label asp-for="@Model.Name">Group Name</label>
+                <span asp-validation-for="@Model.Name" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Create group</button>
+        </form>
+    </div>

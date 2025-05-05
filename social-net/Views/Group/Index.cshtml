@@ -1,0 +1,36 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model social_net.Models.Group
+@{
+}
+
+@inject UserManager<User> UserManager
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+}
+
+<h1> Group Id: @Model.Id </h1>
+<h1> Group Name: @Model.Name </h1>
+
+<h3> Members: </h3>
+<section>
+    @foreach (var member in Model.Members)
+    {
+        // de adaugat JoinedAt in Group pt a pastra ordinea
+        <ul>
+            <li> @member.FirstName @member.LastName </li>
+        </ul>
+    }
+</section>
+
+@if (currentUser != null && currentUser.Groups.Contains(Model))
+{
+    @* <h2> You are a member of this group </h2> *@
+    @* <a class="btn btn-primary" asp-controller="Message" asp-action="Index" asp-route-groupId="@Model.Id">Message</a> *@
+
+} else if ( currentUser != null && !currentUser.Groups.Contains(Model) )
+{
+    <form asp-action="JoinGroup" asp-route-currentUserId="@currentUser.Id" asp-route-groupId="@Model.Id" method="post">
+        <button type="submit" class="btn btn-primary">Join Group</button>
+    </form>
+}
