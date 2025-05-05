@@ -24,6 +24,7 @@ namespace social_net.Controllers
                 .Include(u => u.SentFriendRequests)
                 .Include(u => u.InitiatedFriendships)
                 .Include(u => u.ReceivedFriendships)
+                .Include(u => u.TextPosts.OrderByDescending(t => t.PostedAt))
                 .ToList()
                 .Find(u => u.Id.Equals(profileUserId));
             //Console.WriteLine("S-a intrat in functia Index(), userId = " + userId);
@@ -59,7 +60,7 @@ namespace social_net.Controllers
 
             Console.WriteLine("User " + profileUserId + " a primit o cerere de prietenie de la " + currentUserId);
 
-            return RedirectToAction("Index", "Profile", new { userId = profileUserId });
+            return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
         }
 
         [HttpPost]
@@ -99,7 +100,7 @@ namespace social_net.Controllers
                 Console.WriteLine(friendship.InitiatorUser.Email);
             }
 
-            return RedirectToAction("Index", "Profile", new { userId = profileUserId });
+            return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
 
         }
 
@@ -121,7 +122,7 @@ namespace social_net.Controllers
             _appDbContext.SaveChanges();
 
 
-            return RedirectToAction("Index", "Profile", new { userId = profileUserId });
+            return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
         }
 
         public IActionResult SearchProfile(string searchTerm)
@@ -171,5 +172,20 @@ namespace social_net.Controllers
             //return RedirectToAction("Index", "Message", new { profileUserId = profileUserId, fragment = "bottom" });
             return Redirect(Url.RouteUrl(new { controller = "Profile", action = "MessageBox", profileUserId = profileUserId }) + "#" + "bottom");
         }
+
+        [HttpPost]
+        public IActionResult CreatePost(string textContent, string currentUserId)
+        {
+            var currentUser = _appDbContext.Users
+                .FirstOrDefault(u => u.Id.Equals(currentUserId));
+
+            var textPost = new TextPost { User = currentUser, Text = textContent, PostedAt = DateTime.UtcNow };
+
+            _appDbContext.TextPosts.Add(textPost);
+            _appDbContext.SaveChanges();
+
+            return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+        }
+
     }
 }

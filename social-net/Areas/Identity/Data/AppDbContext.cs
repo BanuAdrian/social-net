@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<Group> Groups { get; set; }
     public DbSet<GroupMembership> GroupMemberships { get; set; }
     public DbSet<GroupMessage> GroupMessages { get; set; }
+    public DbSet<TextPost> TextPosts { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -113,5 +114,15 @@ public class AppDbContext : IdentityDbContext<User>
             .WithMany(g => g.ReceivedMessages)
             .HasForeignKey(gmsg => gmsg.GroupId)
             .OnDelete(DeleteBehavior.Restrict);
+
+
+        builder.Entity<TextPost>().ToTable("TextPosts");
+
+        builder.Entity<TextPost>()
+            .HasOne(t => t.User)
+            .WithMany(u => u.TextPosts)
+            .HasForeignKey(t => t.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
     }
 }
