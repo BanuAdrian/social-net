@@ -1,6 +1,6 @@
 ﻿namespace social_net.Models
 {
-    public class FriendsMessage
+    public class FriendsMessage : IMessage
     {
         public int Id { get; set; }
         public string SenderId { get; set; }

@@ -1,0 +1,9 @@
+﻿@model IEnumerable<IMessage>
+
+@foreach (var message in Model)
+{
+    <article>
+        <b>@message.Sender.FirstName @message.Sender.LastName</b> @@ @message.SentAt: @message.Content
+    </article>
+    <hr />
+}

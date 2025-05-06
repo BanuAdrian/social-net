@@ -1,4 +1,5 @@
 ﻿using Azure.Messaging;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -145,6 +146,7 @@ namespace social_net.Controllers
             return View(users);
         }
 
+        [Authorize]
         public IActionResult MessageBox(string profileUserId)
         {
             var profileUser = _appDbContext.Users

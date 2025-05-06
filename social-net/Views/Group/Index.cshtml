@@ -3,11 +3,9 @@
 @{
 }
 
+@inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
-@{
-    var currentUser = await UserManager.GetUserAsync(User);
-}
 
 <h1> Group Id: @Model.Id </h1>
 <h1> Group Name: @Model.Name </h1>
@@ -23,14 +21,19 @@
     }
 </section>
 
-@if (currentUser != null && currentUser.Groups.Contains(Model))
+@if (SignInManager.IsSignedIn(User))
 {
-    @* <h2> You are a member of this group </h2> *@
-    <a class="btn btn-primary" asp-action="MessageBox" asp-route-groupId="@Model.Id">Message</a>
+    var currentUser = await UserManager.GetUserAsync(User);
+    @if (currentUser.Groups.Contains(Model))
+    {
+        @* <h2> You are a member of this group </h2> *@
+        <a class="btn btn-primary" asp-action="MessageBox" asp-route-groupId="@Model.Id">Message</a>
 
-} else if ( currentUser != null && !currentUser.Groups.Contains(Model) )
-{
-    <form asp-action="JoinGroup" asp-route-currentUserId="@currentUser.Id" asp-route-groupId="@Model.Id" method="post">
-        <button type="submit" class="btn btn-primary">Join Group</button>
-    </form>
+    }
+    else
+    {
+        <form asp-action="JoinGroup" asp-route-currentUserId="@currentUser.Id" asp-route-groupId="@Model.Id" method="post">
+            <button type="submit" class="btn btn-primary">Join Group</button>
+        </form>
+    }
 }
