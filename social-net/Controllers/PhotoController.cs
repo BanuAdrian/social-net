@@ -21,6 +21,12 @@ namespace social_net.Controllers
             var photo = _appDbContext.Photos
                 .Include(p => p.Album)
                 .ThenInclude(a => a.User)
+                .ThenInclude(u => u.InitiatedFriendships)
+                .ThenInclude(ifr => ifr.RecipientUser)
+                .Include(p => p.Album)
+                .ThenInclude(a => a.User)
+                .ThenInclude(u => u.ReceivedFriendships)
+                .ThenInclude(rf => rf.InitiatorUser)
                 .Include(p => p.Comments.OrderBy(c => c.AddedAt))
                 .ThenInclude(p => p.User)
                 .FirstOrDefault(p => p.Id.Equals(photoId));

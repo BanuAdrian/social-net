@@ -74,24 +74,28 @@ else if (currentUser != null)
 
 }
 
-<h3>Posts</h3>
-@foreach (var textPost in Model.TextPosts)
+@if (currentUser == Model || Model.HasPublicProfile || Model.Friends.Contains(currentUser))
 {
-	<div style="border: 1px solid black; margin-bottom: 25px; padding: 10px; border-radius: 10px">
-		<h4>@Model.FirstName @Model.LastName</h4>
-		<p>@textPost.PostedAt</p>
-		<p>@textPost.Text</p>
-	</div>
+	<h3>Posts</h3>
+	@foreach (var textPost in Model.TextPosts)
+	{
+		<div style="border: 1px solid black; margin-bottom: 25px; padding: 10px; border-radius: 10px">
+			<h4>@Model.FirstName @Model.LastName</h4>
+			<p>@textPost.PostedAt</p>
+			<p>@textPost.Text</p>
+		</div>
+	}
+
+	<h3>Albums</h3>
+	@foreach (var photoAlbum in Model.PhotoAlbums)
+	{
+		<h5>Album created on @photoAlbum.PostedAt</h5>
+		@foreach (var photo in photoAlbum.Photos)
+		{
+			<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"><img src="@photo.ImagePath" alt="Photo" style="width: 150px; height: 150px; margin: 5px;" /></a>
+			<br />
+		}
+		<br />
 }
 
-<h3>Albums</h3>
-@foreach (var photoAlbum in Model.PhotoAlbums)
-{
-	<h5>Album created on @photoAlbum.PostedAt</h5>
-	@foreach (var photo in photoAlbum.Photos)
-	{
-		<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"><img src="@photo.ImagePath" alt="Photo" style="width: 150px; height: 150px; margin: 5px;" /></a>
-		<br />
-	}
-	<br />
 }

@@ -27,13 +27,16 @@
             <p><b>  @comment.User.FirstName @comment.User.LastName </b>@@ @comment.AddedAt @comment.Text</p>
         }
     </article>
-    
+
 }
 
+@if (Model.Album.User == currentUser || Model.Album.User.HasPublicProfile || Model.Album.User.Friends.Contains(currentUser))
+{
+    <form asp-action="AddComment" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+        <div id="bottom" class="form-floating mb-3">
+            <input class="form-control" name="commentContent" autocomplete="off" />
+            <label>Press Enter to add a new comment</label>
+        </div>
+    </form>
+}
 
-<form asp-action="AddComment" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-    <div id="bottom" class="form-floating mb-3">
-        <input class="form-control" name="commentContent" autocomplete="off" />
-        <label>Press Enter to add a new comment</label>
-    </div>
-</form>

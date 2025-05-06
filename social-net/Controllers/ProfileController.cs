@@ -183,7 +183,7 @@ namespace social_net.Controllers
             var currentUser = _appDbContext.Users
                 .FirstOrDefault(u => u.Id.Equals(currentUserId));
 
-            var textPost = new TextPost { User = currentUser, Text = textContent, PostedAt = DateTime.UtcNow };
+            var textPost = new TextPost { User = currentUser, Text = textContent, PostedAt = DateTime.Now };
 
             _appDbContext.TextPosts.Add(textPost);
             _appDbContext.SaveChanges();
@@ -203,7 +203,7 @@ namespace social_net.Controllers
             var currentUser = _appDbContext.Users
                 .FirstOrDefault(u => u.Id.Equals(currentUserId));
 
-            var album = new PhotoAlbum { User = currentUser, PostedAt = DateTime.UtcNow };
+            var album = new PhotoAlbum { User = currentUser, PostedAt = DateTime.Now };
             _appDbContext.PhotoAlbums.Add(album);
             _appDbContext.SaveChanges();
 
