@@ -62,7 +62,7 @@
 		}
 	}
 
-	if (currentUser == Model || Model.HasPublicProfile || Model.Friends.Contains(currentUser))
+	if (User.IsInRole("Admin") || currentUser == Model || Model.HasPublicProfile || Model.Friends.Contains(currentUser))
 	{
 		<partial name="_ProfilePartial" />
 

@@ -141,7 +141,7 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(pc => pc.Photo)
             .WithMany(p => p.Comments)
             .HasForeignKey(pc => pc.PhotoId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
     }
 }

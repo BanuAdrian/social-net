@@ -5,7 +5,15 @@
 		<h4>@Model.FirstName @Model.LastName</h4>
 		<p>@textPost.PostedAt</p>
 		<p>@textPost.Text</p>
+
+
+		@if (User.IsInRole("Admin"))
+		{
+			<a class="btn btn-primary" asp-controller="Profile" asp-action="DeletePost" asp-route-profileUserId="@Model.Id" asp-route-textPostId="@textPost.Id">Delete Post</a>
+		}
 	</div>
+
+	
 }
 
 <h3>Albums</h3>
@@ -15,6 +23,11 @@
 	@foreach (var photo in photoAlbum.Photos)
 	{
 		<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"><img src="@photo.ImagePath" alt="Photo" style="width: 150px; height: 150px; margin: 5px;" /></a>
+		@if (User.IsInRole("Admin"))
+		{
+			<a class="btn btn-primary" asp-controller="Photo" asp-action="DeletePhoto" asp-route-profileUserId="@Model.Id" asp-route-photoId="@photo.Id">Delete Photo</a>
+		}
+		
 		<br />
 	}
 	<br />

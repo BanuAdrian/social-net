@@ -42,6 +42,7 @@ namespace social_net.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        [Authorize]
         [HttpPost]
         public IActionResult AddFriend(string profileUserId, string currentUserId)
         {
@@ -218,8 +219,11 @@ namespace social_net.Controllers
                 if (photoFile.Length > 0)
                 {
                     var filePath = Path.Combine(userPhotosFolder, photoFile.FileName);
-                    var stream = new FileStream(filePath, FileMode.Create);
-                    photoFile.CopyTo(stream);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        photoFile.CopyTo(stream);
+                    }
+
                     var photo = new Photo { Album = album, ImagePath = "/users-photos/" + currentUserId + "/" + photoFile.FileName};
                     _appDbContext.Photos.Add(photo);
                 }
@@ -227,6 +231,23 @@ namespace social_net.Controllers
 
             _appDbContext.SaveChanges();
             return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+        }
+
+        [Authorize(Roles = "Admin")]
+        public IActionResult DeletePost(string profileUserId, int textPostId)
+        {
+            var profileUser = _appDbContext.Users
+                .FirstOrDefault(u => u.Id.Equals(profileUserId));
+
+            var textPostToRemove = _appDbContext.TextPosts.FirstOrDefault(tp => tp.Id.Equals(textPostId));
+
+            if (textPostToRemove != null)
+            {
+                _appDbContext.TextPosts.Remove(textPostToRemove);
+                _appDbContext.SaveChanges();
+            }
+
+            return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
         }
     }
 }

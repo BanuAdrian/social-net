@@ -1,3 +1,7 @@
 ﻿@model social_net.Models.PhotoComment
 
 <p><b>  @Model.User.FirstName @Model.User.LastName </b>@@ @Model.AddedAt @Model.Text</p>
+@if (User.IsInRole("Admin"))
+{
+	<a class="btn btn-primary" asp-controller="Photo" asp-action="DeleteComment" asp-route-photoId="@Model.PhotoId" asp-route-commentId="@Model.Id">Delete Comment</a>
+}
