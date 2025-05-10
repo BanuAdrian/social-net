@@ -1,0 +1,69 @@
+﻿@model social_net.Models.ViewPostModel
+@* <h3>Posts</h3> *@
+@* @foreach (var textPost in Model.TextPosts) *@
+@* { *@
+@* 	<div style="border: 1px solid black; margin-bottom: 25px; padding: 10px; border-radius: 10px"> *@
+@* 		<h4>@Model.FirstName @Model.LastName</h4> *@
+@* 		<p>@textPost.PostedAt</p> *@
+@* 		<p>@textPost.Text</p> *@
+
+
+@* 		@if (User.IsInRole("Admin")) *@
+@* 		{ *@
+@* 			<a class="btn btn-primary" asp-controller="Profile" asp-action="DeletePost" asp-route-profileUserId="@Model.Id" asp-route-textPostId="@textPost.Id">Delete Post</a> *@
+@* 		} *@
+@* 	</div> *@
+
+
+@* } *@
+
+@* <h3>Albums</h3> *@
+@* @foreach (var photoAlbum in Model.PhotoAlbums) *@
+@* { *@
+@* 	<h5>Album created on @photoAlbum.PostedAt</h5> *@
+@* 	@foreach (var photo in photoAlbum.Photos) *@
+@* 	{ *@
+@* 		<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"><img src="@photo.ImagePath" alt="Photo" style="width: 150px; height: 150px; margin: 5px;" /></a> *@
+@* 		@if (User.IsInRole("Admin")) *@
+@* 		{ *@
+@* 			<a class="btn btn-primary" asp-controller="Photo" asp-action="DeletePhoto" asp-route-profileUserId="@Model.Id" asp-route-photoId="@photo.Id">Delete Photo</a> *@
+@* 		} *@
+
+@* 		<br /> *@
+@* 	} *@
+@* 	<br /> *@
+@* } *@
+
+
+
+<div style="border: 2px solid black; margin-bottom: 25px; padding: 10px; border-radius: 10px">
+	@if (Model.Type == "Text")
+	{
+		<h4>@Model.TextPost.User.FirstName @Model.TextPost.User.LastName</h4>
+		<p>@Model.PostedAt</p>
+		<p>@Model.TextPost.Text</p>
+
+
+		@if (User.IsInRole("Admin"))
+		{
+			<a class="btn btn-primary" asp-controller="Profile" asp-action="DeletePost" asp-route-profileUserId="@Model.TextPost.User.Id" asp-route-textPostId="@Model.TextPost.Id">Delete Post</a>
+		}
+	}
+	else
+	{
+
+		<h4>@Model.PhotoAlbum.User.FirstName @Model.PhotoAlbum.User.LastName</h4>
+		<p>@Model.PostedAt</p>
+		@foreach (var photo in Model.PhotoAlbum.Photos)
+		{
+			<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"><img src="@photo.ImagePath" alt="Photo" style="width: 150px; height: 150px; margin: 5px;" /></a>
+			@if (User.IsInRole("Admin"))
+			{
+				<a class="btn btn-primary" asp-controller="Photo" asp-action="DeletePhoto" asp-route-profileUserId="@Model.PhotoAlbum.User.Id" asp-route-photoId="@photo.Id">Delete Photo</a>
+			}
+
+			<br />
+		}
+		<br />
+	}
+</div>

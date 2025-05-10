@@ -1,5 +1,6 @@
 ﻿using Azure.Messaging;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -181,7 +182,7 @@ namespace social_net.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreatePost(string textContent, string currentUserId)
+        public IActionResult CreatePost(string textContent, string currentUserId, string? returnUrl)
         {
             var currentUser = _appDbContext.Users
                 .FirstOrDefault(u => u.Id.Equals(currentUserId));
@@ -191,11 +192,12 @@ namespace social_net.Controllers
             _appDbContext.TextPosts.Add(textPost);
             _appDbContext.SaveChanges();
 
-            return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+            //return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+            return Redirect(returnUrl ?? "/");
         }
 
         [HttpPost]
-        public IActionResult CreateAlbum(List<IFormFile> photos, string currentUserId)
+        public IActionResult CreateAlbum(List<IFormFile> photos, string currentUserId, string? returnUrl)
         {
             if (photos == null || !photos.Any())
             {
@@ -230,7 +232,8 @@ namespace social_net.Controllers
             }
 
             _appDbContext.SaveChanges();
-            return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+            //return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+            return Redirect(returnUrl ?? "/");
         }
 
         [Authorize(Roles = "Admin")]
@@ -244,10 +247,36 @@ namespace social_net.Controllers
             if (textPostToRemove != null)
             {
                 _appDbContext.TextPosts.Remove(textPostToRemove);
+
+                Notification notification = new Notification()
+                {
+                    User = profileUser,
+                    Content = "One of your posts was removed!",
+                    RedirectUrl = Url.Action("Index", "Profile", new { profileUserId = profileUserId })
+                };
+
+                _appDbContext.Notifications.Add(notification);
+
                 _appDbContext.SaveChanges();
             }
 
             return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
         }
+
+        public IActionResult ReadNotification(int notificationId)
+        {
+            var notification = _appDbContext.Notifications.FirstOrDefault(n => n.Id.Equals(notificationId));
+
+            if (notification == null)
+            {
+                return NotFound();
+            }
+
+            notification.IsRead = true;
+            _appDbContext.SaveChanges();
+
+            return Redirect(notification.RedirectUrl);
+        }
+
     }
 }

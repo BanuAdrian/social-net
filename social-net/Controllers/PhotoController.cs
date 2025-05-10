@@ -56,11 +56,22 @@ namespace social_net.Controllers
         public IActionResult DeleteComment(int photoId, int commentId)
         {
             var commentToRemove = _appDbContext.PhotoComments
+                .Include(c => c.User)
                 .FirstOrDefault(c => c.Id.Equals(commentId));
 
             if (commentToRemove != null)
             {
                 _appDbContext.PhotoComments.Remove(commentToRemove);
+
+                Notification notification = new Notification()
+                {
+                    User = commentToRemove.User,
+                    Content = "One of your comments was removed!",
+                    RedirectUrl = Url.Action("Index", "Photo", new {photoId = photoId})
+                };
+
+                _appDbContext.Notifications.Add(notification);
+
                 _appDbContext.SaveChanges();
             }
 
@@ -117,6 +128,15 @@ namespace social_net.Controllers
                 }
 
                 _appDbContext.Photos.Remove(photoToRemove);
+
+                Notification notification = new Notification()
+                {
+                    User = profileUser,
+                    Content = "One of your photos was removed!",
+                    RedirectUrl = Url.Action("Index", "Profile", new {profileUserId = profileUserId})
+                };
+
+                _appDbContext.Notifications.Add(notification);
                 _appDbContext.SaveChanges();
             }
 

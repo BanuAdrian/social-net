@@ -18,6 +18,7 @@ public class AppDbContext : IdentityDbContext<User>
     public DbSet<PhotoAlbum> PhotoAlbums { get; set; }
     public DbSet<Photo> Photos { get; set; }
     public DbSet<PhotoComment> PhotoComments { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)

@@ -45,5 +45,7 @@ namespace social_net.Models
         public List<PhotoAlbum> PhotoAlbums { get; set; } = new();
 
         public List<PhotoComment> PhotoComments { get; set; } = new();
+
+        public List<Notification> Notifications { get; set; } = new();
     }
 }

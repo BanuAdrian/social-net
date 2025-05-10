@@ -1,0 +1,24 @@
+﻿@model social_net.Models.User
+
+@{
+	var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div style="border: 2px solid black; margin-bottom: 25px; padding: 10px; border-radius: 10px">
+
+	<h3>Create post</h3>
+	<form asp-controller="Profile" asp-action="CreatePost" asp-route-currentUserId="@Model.Id" method="post">
+		<input type="hidden" name="returnUrl" value="@returnUrl" />
+		<div class="form-floating mb-3">
+			<input class="form-control" name="textContent" autocomplete="off" />
+			<label>What's on your mind, @Model.FirstName?</label>
+		</div>
+	</form>
+
+	<h3>Create album</h3>
+	<form asp-controller="Profile" asp-action="CreateAlbum" asp-route-currentUserId="@Model.Id" method="post" enctype="multipart/form-data">
+		<input type="hidden" name="returnUrl" value="@returnUrl" />
+		<input type="file" name="photos" class="form-control" multiple />
+		<button type="submit" class="btn btn-primary">Create Album</button>
+	</form>
+</div>

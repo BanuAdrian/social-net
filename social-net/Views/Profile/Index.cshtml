@@ -14,19 +14,7 @@
 	if (currentUser == Model)
 	{
 		<a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Edit Account</a>
-		<h3>Create post</h3>
-		<form asp-action="CreatePost" asp-route-currentUserId="@currentUser.Id" method="post">
-			<div class="form-floating mb-3">
-				<input class="form-control" name="textContent" autocomplete="off" />
-				<label>What's on your mind, @currentUser.FirstName?</label>
-			</div>
-		</form>
-
-		<h3>Create album</h3>
-		<form asp-action="CreateAlbum" asp-route-currentUserId="@currentUser.Id" method="post" enctype="multipart/form-data">
-			<input type="file" name="photos" class="form-control" multiple />
-			<button type="submit" class="btn btn-primary">Create Album</button>
-		</form>
+		<partial name="_CreatePartial" model="currentUser"/>
 	} else
 	{
 		if (Model.AllFriendships.Any(fr => fr.InitiatorUserId == currentUser.Id || fr.RecipientUserId == currentUser.Id))
@@ -61,16 +49,71 @@
 			}
 		}
 	}
-
 	if (User.IsInRole("Admin") || currentUser == Model || Model.HasPublicProfile || Model.Friends.Contains(currentUser))
 	{
-		<partial name="_ProfilePartial" />
+		@* <partial name="_ProfilePartial" /> *@
+
+		@* var textPosts = await Model.TextPosts.Include(tp => tp.User).ToListAsync(); *@
+		@* var photoAlbums = await _appDbContext *@
+		@* 	.PhotoAlbums *@
+		@* 	.Include(pa => pa.User) *@
+		@* 	.Include(pa => pa.Photos) *@
+		@* 	.ToListAsync(); *@
+		// await _appDbContext.TextPosts.Include(tp => tp.User);
+
+		// var posts = textPosts.Concat(photoAlbums);
+
+		var posts = new List<ViewPostModel>();
+
+		posts.AddRange(Model.TextPosts.Select(tp => new ViewPostModel
+					{
+						Type = "Text",
+						TextPost = tp,
+						PostedAt = tp.PostedAt
+					}));
+
+		posts.AddRange(Model.PhotoAlbums.Select(pa => new ViewPostModel
+					{
+						Type = "Photo",
+						PhotoAlbum = pa,
+						PostedAt = pa.PostedAt
+					}));
+
+		var sortedPosts = posts.OrderByDescending(p => p.PostedAt);
+		<h1>Posts</h1>
+		foreach (var post in sortedPosts)
+		{
+			<partial name="_PostsPartial" model="post" />
+		}
 
 	}
 }
 else if (Model.HasPublicProfile)
 {
-	<partial name="_ProfilePartial" />
+	@* <partial name="_ProfilePartial" /> *@
+	var posts = new List<ViewPostModel>();
+
+	posts.AddRange(Model.TextPosts.Select(tp => new ViewPostModel
+				{
+					Type = "Text",
+					TextPost = tp,
+					PostedAt = tp.PostedAt
+				}));
+
+	posts.AddRange(Model.PhotoAlbums.Select(pa => new ViewPostModel
+				{
+					Type = "Photo",
+					PhotoAlbum = pa,
+					PostedAt = pa.PostedAt
+				}));
+
+	var sortedPosts = posts.OrderByDescending(p => p.PostedAt);
+	<h1>Posts</h1>
+
+	foreach (var post in sortedPosts)
+	{
+		<partial name="_PostsPartial" model="post" />
+	}
 
 } else 
 {

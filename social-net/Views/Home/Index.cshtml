@@ -1,8 +1,92 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@{
+	ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+@inject social_net.Data.AppDbContext _appDbContext;
+
+@{
+	var textPosts = await _appDbContext
+		.TextPosts
+		.Include(tp => tp.User)
+		.ThenInclude(u => u.InitiatedFriendships)
+		.ThenInclude(f => f.RecipientUser)
+		.Include(tp => tp.User)
+		.ThenInclude(u => u.ReceivedFriendships)
+		.ThenInclude(f => f.InitiatorUser)
+		.ToListAsync();
+	var photoAlbums = await _appDbContext
+		.PhotoAlbums
+		.Include(pa => pa.User)
+		.ThenInclude(u => u.InitiatedFriendships)
+		.ThenInclude(f => f.RecipientUser)
+		.Include(pa => pa.User)
+		.ThenInclude(u => u.ReceivedFriendships)
+		.ThenInclude(f => f.InitiatorUser)
+		.Include(pa => pa.Photos)
+		.ToListAsync();
+	// await _appDbContext.TextPosts.Include(tp => tp.User);
+
+	// var posts = textPosts.Concat(photoAlbums);
+
+	var posts = new List<ViewPostModel>();
+
+	posts.AddRange(textPosts.Select(tp => new ViewPostModel
+			{
+				Type = "Text",
+				TextPost = tp,
+				User = tp.User,
+				PostedAt = tp.PostedAt
+			}));
+
+	posts.AddRange(photoAlbums.Select(pa => new ViewPostModel
+			{
+				Type = "Photo",
+				PhotoAlbum = pa,
+				User = pa.User,
+				PostedAt = pa.PostedAt
+			}));
+
+	var sortedPosts = posts.OrderByDescending(p => p.PostedAt);
+
+	bool noPostsShown = true;
+}
+
+@if (SignInManager.IsSignedIn(User))
+{
+	var currentUser = await UserManager.GetUserAsync(User);
+	<partial name="_CreatePartial" model="currentUser"/>
+	foreach (var post in sortedPosts)
+	{
+		if (User.IsInRole("Admin") || currentUser == post.User || post.User.HasPublicProfile || post.User.Friends.Contains(currentUser))
+		{
+			noPostsShown = false;
+			<partial name="_PostsPartial" model="post" />
+		}
+	}
+} else
+{
+	foreach (var post in sortedPosts)
+	{
+		if (post.User.HasPublicProfile)
+		{
+			noPostsShown = false;
+			<partial name="_PostsPartial" model="post" />
+		}
+	}
+}
+@if (noPostsShown)
+{
+	<h1>No posts to see!</h1>
+	if (SignInManager.IsSignedIn(User))
+	{
+		<h2>Add a friend or make a post to get started</h2>
+	} else
+	{
+		<h2>Login to get started</h2>
+	}
+}
+
