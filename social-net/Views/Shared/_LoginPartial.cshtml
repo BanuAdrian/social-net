@@ -8,101 +8,210 @@
 
 
 <ul class="navbar-nav">
-    @if (SignInManager.IsSignedIn(User))
-    {
-        var currentUser = await UserManager.GetUserAsync(User);
-        currentUser = await _appDbContext.Users
-    @* .Include(u => u.SentFriendRequests) *@
-    @* .ThenInclude(fr => fr.Sender) *@
-    .Include(u => u.ReceivedFriendRequests)
-            .ThenInclude(fr => fr.Sender)
-            .Include(u => u.InitiatedFriendships)
-            .Include(u => u.ReceivedFriendships)
-            .Include(u => u.Notifications.OrderByDescending(n => n.Id))
-            .FirstOrDefaultAsync(u => u.Id.Equals(currentUser.Id));
+	@if (SignInManager.IsSignedIn(User))
+	{
+		var currentUser = await UserManager
+			.GetUserAsync(User);
 
-        await _appDbContext.Friendships
-            .Include(f => f.InitiatorUser)
-            .Include(f => f.RecipientUser)
-            .Where(f => f.InitiatorUserId == currentUser.Id || f.RecipientUserId == currentUser.Id)
-            .ToListAsync();
+		currentUser = await _appDbContext
+			.Users
+			.Include(u => u.ReceivedFriendRequests)
+			.ThenInclude(fr => fr.Sender)
+			.Include(u => u.InitiatedFriendships)
+			.Include(u => u.ReceivedFriendships)
+			.Include(u => u.Notifications.OrderByDescending(n => n.Id))
+			.Include(u => u.GroupMemberships)
+			@* .Include(u => u.SentMessages) *@
+			@* .Include(u => u.ReceivedMessages) *@
+			.FirstOrDefaultAsync(u => u.Id.Equals(currentUser.Id));
 
-        @* await _appDbContext.Notifications.ToListAsync(); *@
+		await _appDbContext
+			.Friendships
+			.Include(f => f.InitiatorUser)
+			.Include(f => f.RecipientUser)
+			.Where(f => f.InitiatorUserId == currentUser.Id || f.RecipientUserId == currentUser.Id)
+			.ToListAsync();
 
-        var allGroups = await _appDbContext.Groups.ToListAsync();
+		var allGroups = await _appDbContext
+			.Groups
+			.Include(g => g.ReceivedMessages)
+			.ToListAsync();
 
-        <li class="nav-item dropdown"> 
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false"> 
-                 All Groups
-             </a> 
-             <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink"> 
-                 @foreach (var group in allGroups) 
-                 {
-                    <li><a class="dropdown-item" asp-controller="Group" asp-action="Index" asp-route-groupId="@group.Id">@group.Name</a></li>
-                 } 
-             </ul>
-        </li>
+		var allSentMessages = await _appDbContext.FriendsMessages.Where(msg => msg.Sender == currentUser).ToListAsync();
+		var allReceivedMessages = await _appDbContext.FriendsMessages.Where(msg => msg.Receiver == currentUser).ToListAsync();
 
-        <li class="nav-item dropdown"> 
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false"> 
-                 Notifications
-             </a> 
-             <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink"> 
-                 @foreach (var notification in currentUser.Notifications) 
-                 {
-                     // pot sa adaug o actiune ReadNotification()
-                    <li><a asp-controller="Profile" asp-action="ReadNotification" asp-route-notificationId="@notification.Id">@notification.Content</a></li>
-                    <hr />
-                 } 
-             </ul>
-        </li>
+		var returnUrl = Context.Request.Path + Context.Request.QueryString;
 
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Group" asp-action="CreateGroup">Create a new Group</a>
-        </li>
+		Dictionary<String, Dictionary<object, IMessage>> messagesDictionary = new Dictionary<string, Dictionary<object, IMessage>>();
+		messagesDictionary["Friends"] = new Dictionary<object, IMessage>();
+		messagesDictionary["Groups"] = new Dictionary<object, IMessage>();
 
-        <li class="nav-item dropdown"> 
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false"> 
-                 Friend Requests
-             </a> 
-             <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink"> 
-                 @foreach (var friendRequest in currentUser.ReceivedFriendRequests) 
-                 {
-                    <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@friendRequest.SenderId">@friendRequest.Sender.FirstName @friendRequest.Sender.LastName</a></li>
-                 } 
-             </ul>
-        </li>
+		foreach (var friend in currentUser.Friends)
+		{
+			var messages = allSentMessages
+				.Where(m => m.Receiver == friend)
+				.Select(m => new { Msg = m, IsSent = true })
+				.Concat(
+					allReceivedMessages
+					.Where(m => m.Sender == friend)
+					.Select(m => new { Msg = m, IsSent = false })
+				)
+				.OrderByDescending(m => m.Msg.SentAt)
+				.FirstOrDefault();
 
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Friends
-            </a>
-            <ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink">
-                @foreach (var friend in currentUser.Friends)
-                {
-                    <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@friend.Id">@friend.FirstName @friend.LastName</a></li>
-                }
-            </ul>
-        </li>
-    <li class="nav-item">
-        @* <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@currentUser.FirstName @currentUser.LastName</a> *@
-            <a id="manage" class="nav-link text-dark" asp-area="" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@currentUser.Id">@currentUser.FirstName @currentUser.LastName</a>
+			if (messages != null)
+			{
+				messagesDictionary["Friends"].Add(friend, messages.Msg);
+			}
+		}
+		foreach (var groupMembership in currentUser.GroupMemberships)
+		{
+			var groupMessages = groupMembership
+				.Group
+				.ReceivedMessages
+				.Where(m => m.Sender == currentUser)
+				.Select(m => new { Msg = m, IsSent = true })
+				.Concat(
+					groupMembership
+					.Group
+					.ReceivedMessages
+					.Where(m => m.Sender != currentUser)
+					.Select(m => new { Msg = m, IsSent = false })
+				)
+				.OrderByDescending(m => m.Msg.SentAt)
+				.FirstOrDefault();
 
-    </li>
-    <li class="nav-item">
-        <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
-        </form>
-    </li>
-        
-}
-else
-{
-    <li class="nav-item">
-        <a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
-    </li>
-}
+			if (groupMessages != null)
+			{
+				messagesDictionary["Groups"].Add(groupMembership.Group, groupMessages.Msg);
+			}
+		}
+
+		var mergedMessages = messagesDictionary["Friends"]
+			.Select(kvp => new
+			{
+				Type = "Friend",
+				Key = kvp.Key,
+				Message = kvp.Value,
+				SentAt = kvp.Value.SentAt
+			})
+			.Concat
+			(
+				messagesDictionary["Groups"]
+				.Select(kvp => new
+				{
+					Type = "Group",
+					Key = kvp.Key,
+					Message = kvp.Value,
+					SentAt = kvp.Value.SentAt
+				})
+			)
+			.OrderByDescending(m => m.SentAt)
+			.ToList();
+
+		<li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+				Messages
+			</a>
+			<ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink">
+				@foreach (var item in mergedMessages)
+				{
+					if (item.Type == "Friend")
+					{
+						var user = (User)item.Key;
+						<li>
+							<a asp-controller="Profile" asp-action="MessageBox" asp-route-profileUserId="@user.Id" class="dropdown-item">
+								<strong>@user.FirstName @user.LastName</strong><br />
+								@((item.Message.Sender == currentUser) ? $"You: {item.Message.Content}" : item.Message.Content)
+							</a>
+						</li>
+					}
+					else if (item.Type == "Group")
+					{
+						var group = (Group)item.Key;
+						<li>
+							<a asp-controller="Group" asp-action="MessageBox" asp-route-groupId="@group.Id" class="dropdown-item">
+								<strong>@group.Name</strong><br />
+								@((item.Message.Sender == currentUser) ? $"You: {item.Message.Content}" : $"{item.Message.Sender.FirstName + " " + item.Message.Sender.LastName}: {item.Message.Content}")
+							</a>
+						</li>
+					}
+				}
+			</ul>
+		</li>
+
+		<li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+				All Groups
+			</a>
+			<ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink">
+				@foreach (var group in allGroups)
+				{
+					<li><a class="dropdown-item" asp-controller="Group" asp-action="Index" asp-route-groupId="@group.Id">@group.Name</a></li>
+				}
+			</ul>
+		</li>
+
+		<li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+				Notifications
+			</a>
+			<ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink">
+				@foreach (var notification in currentUser.Notifications)
+				{
+					// pot sa adaug o actiune ReadNotification()
+					<li><a asp-controller="Profile" asp-action="ReadNotification" asp-route-notificationId="@notification.Id">@notification.Content</a><a class="btn btn-primary" asp-controller="Profile" asp-action="DeleteNotification" asp-route-notificationId="@notification.Id" asp-route-returnUrl="@returnUrl">X</a></li>
+					<hr />
+				}
+			</ul>
+		</li>
+
+		<li class="nav-item">
+			<a class="nav-link text-dark" asp-area="" asp-controller="Group" asp-action="CreateGroup">Create a new Group</a>
+		</li>
+
+		<li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+				Friend Requests
+			</a>
+			<ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink">
+				@foreach (var friendRequest in currentUser.ReceivedFriendRequests)
+				{
+					<li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@friendRequest.SenderId">@friendRequest.Sender.FirstName @friendRequest.Sender.LastName</a></li>
+				}
+			</ul>
+		</li>
+
+		<li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+				Friends
+			</a>
+			<ul class="dropdown-menu dropdown-menu-light" aria-labelledby="navbarDarkDropdownMenuLink">
+				@foreach (var friend in currentUser.Friends)
+				{
+					<li><a class="dropdown-item" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@friend.Id">@friend.FirstName @friend.LastName</a></li>
+				}
+			</ul>
+		</li>
+		<li class="nav-item">
+			@* <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@currentUser.FirstName @currentUser.LastName</a> *@
+			<a id="manage" class="nav-link text-dark" asp-area="" asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@currentUser.Id">@currentUser.FirstName @currentUser.LastName</a>
+
+		</li>
+		<li class="nav-item">
+			<form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+				<button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
+			</form>
+		</li>
+
+	}
+	else
+	{
+		<li class="nav-item">
+			<a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+		</li>
+	}
 </ul>

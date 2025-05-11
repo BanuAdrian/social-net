@@ -1,7 +1,33 @@
-﻿@model social_net.Models.PhotoComment
+﻿@using Microsoft.AspNetCore.Identity
+@model social_net.Models.PhotoComment
 
-<p><b>  @Model.User.FirstName @Model.User.LastName </b>@@ @Model.AddedAt @Model.Text</p>
-@if (User.IsInRole("Admin"))
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+
+
+
+<p>
+	@if (!Model.IsAccepted)
+	{
+		<i>[waiting for acceptance]</i>
+	}
+	<b>
+		<a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@Model.User.Id">
+
+			@Model.User.FirstName @Model.User.LastName
+		</a>
+	</b>@@ @Model.AddedAt: @Model.Text
+</p>
+
+@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
 {
-	<a class="btn btn-primary" asp-controller="Photo" asp-action="DeleteComment" asp-route-photoId="@Model.PhotoId" asp-route-commentId="@Model.Id">Delete Comment</a>
+	<a class="btn btn-primary" asp-controller="Photo" asp-action="DeleteCommentAdmin" asp-route-photoId="@Model.PhotoId" asp-route-commentId="@Model.Id">Delete Comment</a>
+}
+else if (SignInManager.IsSignedIn(User))
+{
+	var currentUser = await UserManager.GetUserAsync(User);
+	if (Model.User == currentUser)
+	{
+		<a class="btn btn-primary" asp-controller="Photo" asp-action="DeleteOwnComment" asp-route-photoId="@Model.PhotoId" asp-route-commentId="@Model.Id">Delete Comment</a>
+	}
 }

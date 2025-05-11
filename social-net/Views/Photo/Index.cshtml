@@ -8,48 +8,57 @@
 @inject UserManager<User> UserManager
 @inject social_net.Data.AppDbContext _appDbContext
 
-<h1>Photo posted by @Model.Album.User.FirstName @Model.Album.User.LastName</h1>
-<img src="@Model.ImagePath" alt="Photo"  style="margin-bottom: 25px" />
-
-@if (SignInManager.IsSignedIn(User))
+@if (Model == null)
 {
-    var currentUser = await UserManager.GetUserAsync(User);
-
-    @foreach (var comment in Model.Comments)
-    {
-        <article>
-            @if (Model.Album.User == currentUser && comment.User != currentUser && !comment.IsAccepted)
-            {
-                <a asp-action="AcceptComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Accept</a> <a asp-action="DeclineComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Decline</a>
-            }
-            @if (Model.Album.User == currentUser || comment.IsAccepted)
-            {
-                <partial name="_CommentPartial" model="comment" />
-            }
-        </article>
-    }
-
-    @if (Model.Album.User == currentUser || Model.Album.User.HasPublicProfile || Model.Album.User.Friends.Contains(currentUser))
-    {
-        <form asp-action="AddComment" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-            <div id="bottom" class="form-floating mb-3">
-                <input class="form-control" name="commentContent" autocomplete="off" />
-                <label>Press Enter to add a new comment</label>
-            </div>
-        </form>
-    }
+    <h1>The photo couldn't be found (it might have been deleted)</h1>
 } else
 {
-    @foreach (var comment in Model.Comments)
+    <h1>Photo posted by @Model.Album.User.FirstName @Model.Album.User.LastName</h1>
+    <img src="@Model.ImagePath" alt="Photo" style="margin-bottom: 25px" />
+
+    @if (SignInManager.IsSignedIn(User))
     {
-        <article>
-            @if (comment.IsAccepted)
-            {
-                <partial name="_CommentPartial" model="comment"/>
-            }
-        </article>
+        var currentUser = await UserManager.GetUserAsync(User);
+
+        @foreach (var comment in Model.Comments)
+        {
+            <article>
+                @if (Model.Album.User == currentUser && comment.User != currentUser && !comment.IsAccepted)
+                {
+                    <a asp-action="AcceptComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Accept</a> <a asp-action="DeclineComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Decline</a>
+                }
+                @if (Model.Album.User == currentUser || comment.User == currentUser || comment.IsAccepted )
+                {
+                    <partial name="_CommentPartial" model="comment" />
+                }
+            </article>
+        }
+
+        @if (Model.Album.User == currentUser || Model.Album.User.HasPublicProfile || Model.Album.User.Friends.Contains(currentUser))
+        {
+            <form asp-action="AddComment" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+                <div id="bottom" class="form-floating mb-3">
+                    <input class="form-control" name="commentContent" autocomplete="off" />
+                    <label>Press Enter to add a new comment</label>
+                </div>
+            </form>
+        }
+    }
+    else
+    {
+        @foreach (var comment in Model.Comments)
+        {
+            <article>
+                @if (comment.IsAccepted)
+                {
+                    <partial name="_CommentPartial" model="comment" />
+                }
+            </article>
+        }
     }
 }
+
+
 
 
 

@@ -7,6 +7,9 @@
 @inject UserManager<User> UserManager
 
 <h1>@Model.FirstName @Model.LastName</h1>
+@{
+	bool noPostsShown = true;
+}
 
 @if (SignInManager.IsSignedIn(User))
 {
@@ -83,6 +86,7 @@
 		<h1>Posts</h1>
 		foreach (var post in sortedPosts)
 		{
+			noPostsShown = false;
 			<partial name="_PostsPartial" model="post" />
 		}
 
@@ -112,10 +116,18 @@ else if (Model.HasPublicProfile)
 
 	foreach (var post in sortedPosts)
 	{
+		noPostsShown = false;
 		<partial name="_PostsPartial" model="post" />
 	}
 
 } else 
 {
+	noPostsShown = false;
 	<h5>This user has a private profile</h5>
+}
+
+
+@if (noPostsShown)
+{
+	<h3>This user has no posts</h3>
 }

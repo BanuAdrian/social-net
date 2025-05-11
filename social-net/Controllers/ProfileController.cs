@@ -13,7 +13,7 @@ namespace social_net.Controllers
     {
         private readonly ILogger<ProfileController> _logger;
         private readonly AppDbContext _appDbContext;
-        
+
         public ProfileController(ILogger<ProfileController> logger, AppDbContext appDbContext)
         {
             _logger = logger;
@@ -83,7 +83,7 @@ namespace social_net.Controllers
 
             var existingFriendship = _appDbContext
                 .Friendships
-                .FirstOrDefault(fr => (fr.InitiatorUserId == currentUserId  && fr.RecipientUserId == profileUserId
+                .FirstOrDefault(fr => (fr.InitiatorUserId == currentUserId && fr.RecipientUserId == profileUserId
                                 || (fr.InitiatorUserId == profileUserId && fr.RecipientUserId == currentUserId)));
 
             if (existingFriendship == null)
@@ -125,7 +125,7 @@ namespace social_net.Controllers
 
             var friendRequestToRemove = _appDbContext.FriendRequests.FirstOrDefault(fr => fr.SenderId == profileUserId && fr.ReceiverId == currentUserId);
             _appDbContext.FriendRequests.Remove(friendRequestToRemove);
-            
+
             _appDbContext.SaveChanges();
 
 
@@ -143,8 +143,20 @@ namespace social_net.Controllers
             //    return View(user);
             //}
             //return RedirectToAction("Index", "Home");
-            List<User> users = _appDbContext.Users.ToList().FindAll(u => u.FirstName.ToLower().Equals(searchTerm.ToLower()));
-            users.AddRange(_appDbContext.Users.ToList().FindAll(u => u.LastName.ToLower().Equals(searchTerm.ToLower())));
+            //List<User> users = _appDbContext.Users.ToList().FindAll(u => u.FirstName.ToLower().Equals(searchTerm.ToLower()));
+            //users.AddRange(_appDbContext.Users.ToList().FindAll(u => u.LastName.ToLower().Equals(searchTerm.ToLower())));
+            var users = _appDbContext
+                .Users
+                .Where(u =>
+                    u.FirstName.ToLower().Contains(searchTerm) ||
+                    u.LastName.ToLower().Contains(searchTerm) ||
+                    (u.FirstName + " " + u.LastName).ToLower().Contains(searchTerm) ||
+                    (u.LastName + " " + u.FirstName).ToLower().Contains(searchTerm)
+                )
+                .ToList();
+            
+            
+
             return View(users);
         }
 
@@ -226,7 +238,7 @@ namespace social_net.Controllers
                         photoFile.CopyTo(stream);
                     }
 
-                    var photo = new Photo { Album = album, ImagePath = "/users-photos/" + currentUserId + "/" + photoFile.FileName};
+                    var photo = new Photo { Album = album, ImagePath = "/users-photos/" + currentUserId + "/" + photoFile.FileName };
                     _appDbContext.Photos.Add(photo);
                 }
             }
@@ -237,7 +249,7 @@ namespace social_net.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public IActionResult DeletePost(string profileUserId, int textPostId)
+        public IActionResult DeletePostAdmin(string profileUserId, int textPostId, string? returnUrl)
         {
             var profileUser = _appDbContext.Users
                 .FirstOrDefault(u => u.Id.Equals(profileUserId));
@@ -260,7 +272,27 @@ namespace social_net.Controllers
                 _appDbContext.SaveChanges();
             }
 
-            return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
+            //return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
+            return Redirect(returnUrl ?? "/");
+
+        }
+
+        public IActionResult DeleteOwnPost(string profileUserId, int textPostId, string? returnUrl)
+        {
+            var profileUser = _appDbContext.Users
+                .FirstOrDefault(u => u.Id.Equals(profileUserId));
+
+            var textPostToRemove = _appDbContext.TextPosts.FirstOrDefault(tp => tp.Id.Equals(textPostId));
+
+            if (textPostToRemove != null)
+            {
+                _appDbContext.TextPosts.Remove(textPostToRemove);
+                _appDbContext.SaveChanges();
+            }
+
+            //return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
+            //return Redirect(returnUrl ?? "/");
+            return Redirect(returnUrl ?? "/");
         }
 
         public IActionResult ReadNotification(int notificationId)
@@ -276,6 +308,21 @@ namespace social_net.Controllers
             _appDbContext.SaveChanges();
 
             return Redirect(notification.RedirectUrl);
+        }
+
+        public IActionResult DeleteNotification(int notificationId, string? returnUrl)
+        {
+            var notification = _appDbContext.Notifications.FirstOrDefault(n => n.Id.Equals(notificationId));
+
+            if (notification == null)
+            {
+                return NotFound();
+            }
+
+            _appDbContext.Notifications.Remove(notification);
+            _appDbContext.SaveChanges();
+
+            return Redirect(returnUrl ?? "/");
         }
 
     }

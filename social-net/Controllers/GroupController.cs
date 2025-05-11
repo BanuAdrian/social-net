@@ -73,7 +73,8 @@ namespace social_net.Controllers
 
         public IActionResult MessageBox(int groupId)
         {
-            var group = _appDbContext.Groups
+            var group = _appDbContext
+                .Groups
                 .Include(g => g.ReceivedMessages)
                 .ThenInclude(msg => msg.Sender)
                 .FirstOrDefault(g => g.Id.Equals(groupId));

@@ -31,6 +31,7 @@ namespace social_net.Controllers
                 .Include(p => p.Comments.OrderBy(c => c.AddedAt))
                 .ThenInclude(p => p.User)
                 .FirstOrDefault(p => p.Id.Equals(photoId));
+
             return View(photo);
         }
 
@@ -39,6 +40,7 @@ namespace social_net.Controllers
         {
             var photo = _appDbContext.Photos
                 .Include(p => p.Album)
+                .ThenInclude(a => a.User)
                 .FirstOrDefault(p => p.Id.Equals(photoId));
 
             var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
@@ -47,13 +49,25 @@ namespace social_net.Controllers
             var comment = new PhotoComment { User = currentUser, Text = commentContent, Photo = photo, AddedAt = DateTime.Now, IsAccepted = (currentUser == photo.Album.User) ? true : false };
 
             _appDbContext.PhotoComments.Add(comment);
+
+            if (currentUser != photo.Album.User)
+            {
+                Notification notification = new Notification()
+                {
+                    User = photo.Album.User,
+                    Content = currentUser.FirstName + " " + currentUser.LastName + " added a comment to your photo",
+                    RedirectUrl = Url.Action("Index", "Photo", new { photoId = photoId })
+                };
+                _appDbContext.Notifications.Add(notification);
+            }
+
             _appDbContext.SaveChanges();
 
             return RedirectToAction("Index", "Photo", new { photoId = photoId });
         }
 
         [Authorize(Roles = "Admin")]
-        public IActionResult DeleteComment(int photoId, int commentId)
+        public IActionResult DeleteCommentAdmin(int photoId, int commentId)
         {
             var commentToRemove = _appDbContext.PhotoComments
                 .Include(c => c.User)
@@ -78,14 +92,44 @@ namespace social_net.Controllers
             return RedirectToAction("Index", "Photo", new { photoId = photoId });
         }
 
+        public IActionResult DeleteOwnComment(int photoId, int commentId)
+        {
+            var commentToRemove = _appDbContext.PhotoComments
+                .Include(c => c.User)
+                .FirstOrDefault(c => c.Id.Equals(commentId));
+
+            if (commentToRemove != null)
+            {
+                _appDbContext.PhotoComments.Remove(commentToRemove);
+                _appDbContext.SaveChanges();
+            }
+
+            return RedirectToAction("Index", "Photo", new { photoId = photoId });
+        }
+
         public IActionResult AcceptComment(int photoId, int commentId)
         {
-            var comment = _appDbContext.PhotoComments
+            var comment = _appDbContext
+                .PhotoComments
+                .Include(c => c.User)
+                .Include(c => c.Photo)
+                .ThenInclude(p => p.Album)
+                .ThenInclude(a => a.User)
                 .FirstOrDefault(c => c.Id.Equals(commentId));
 
             comment.IsAccepted = true;
 
+
+            Notification notification = new Notification()
+            {
+                User = comment.User,
+                Content = comment.Photo.Album.User.FirstName + " " + comment.Photo.Album.User.LastName + " accepted your comment on their photo",
+                RedirectUrl = Url.Action("Index", "Photo", new { photoId = photoId })
+            };
+
             _appDbContext.PhotoComments.Update(comment);
+            _appDbContext.Notifications.Add(notification);
+
             _appDbContext.SaveChanges();
 
             return RedirectToAction("Index", "Photo", new { photoId = photoId });
@@ -93,17 +137,32 @@ namespace social_net.Controllers
 
         public IActionResult DeclineComment(int photoId, int commentId)
         {
-            var comment = _appDbContext.PhotoComments
+            var comment = _appDbContext
+                .PhotoComments
+                .Include(c => c.User)
+                .Include(c => c.Photo)
+                .ThenInclude(p => p.Album)
+                .ThenInclude(a => a.User)
                 .FirstOrDefault(c => c.Id.Equals(commentId));
 
+
+            Notification notification = new Notification()
+            {
+                User = comment.User,
+                Content = comment.Photo.Album.User.FirstName + " " + comment.Photo.Album.User.LastName + " declined your comment on their photo",
+                RedirectUrl = Url.Action("Index", "Photo", new { photoId = photoId })
+            };
+
             _appDbContext.PhotoComments.Remove(comment);
+            _appDbContext.Notifications.Add(notification);
+
             _appDbContext.SaveChanges();
 
             return RedirectToAction("Index", "Photo", new { photoId = photoId });
         }
 
         [Authorize(Roles = "Admin")]
-        public IActionResult DeletePhoto(string profileUserId, int photoId)
+        public IActionResult DeletePhotoAdmin(string profileUserId, int photoId, string? returnUrl)
         {
             var profileUser = _appDbContext
                 .Users
@@ -137,10 +196,44 @@ namespace social_net.Controllers
                 };
 
                 _appDbContext.Notifications.Add(notification);
+
                 _appDbContext.SaveChanges();
             }
 
-            return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
+            //return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
+            return Redirect(returnUrl ?? "/");
+        }
+
+        public IActionResult DeleteOwnPhoto(string profileUserId, int photoId, string? returnUrl)
+        {
+            var profileUser = _appDbContext
+                .Users
+                .FirstOrDefault(u => u.Id.Equals(profileUserId));
+
+            var photoToRemove = _appDbContext
+                .Photos
+                .Include(p => p.Album)
+                .ThenInclude(pa => pa.Photos)
+                .FirstOrDefault(p => p.Id.Equals(photoId));
+
+            if (photoToRemove != null)
+            {
+                if (photoToRemove.Album.Photos.Count == 1)
+                {
+                    var albumToRemove = _appDbContext.PhotoAlbums.FirstOrDefault(pa => pa.Id.Equals(photoToRemove.AlbumId));
+
+                    if (albumToRemove != null)
+                    {
+                        _appDbContext.PhotoAlbums.Remove(albumToRemove);
+                    }
+                }
+
+                _appDbContext.Photos.Remove(photoToRemove);
+                _appDbContext.SaveChanges();
+            }
+
+            //return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
+            return Redirect(returnUrl ?? "/");
         }
     }
 }

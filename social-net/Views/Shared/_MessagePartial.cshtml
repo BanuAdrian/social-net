@@ -3,7 +3,7 @@
 @foreach (var message in Model)
 {
     <article>
-        <b>@message.Sender.FirstName @message.Sender.LastName</b> @@ @message.SentAt: @message.Content
+        <b><a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@message.Sender.Id">@message.Sender.FirstName @message.Sender.LastName</a></b> @@ @message.SentAt: @message.Content
     </article>
     <hr />
 }
