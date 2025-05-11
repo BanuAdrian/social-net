@@ -15,8 +15,10 @@
     currentUser = await _appDbContext.Users
         .Include(u => u.GroupsSentMessages)
         .FirstOrDefaultAsync(u => u.Id.Equals(currentUser.Id));
-    <h3> Conversation with <i>@Model.Name</i> group </h3>
 
+    <div class="post-container">
+    <h3> Conversation with <i>@Model.Name</i> group </h3>
+    </div>
     <section id="messageContainer">
         @{
             var allMessages = Model.ReceivedMessages;
@@ -28,7 +30,8 @@
     <form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-groupId="@Model.Id" method="post">
         <div id="bottom" class="form-floating mb-3">
             <input class="form-control" name="messageContent" autocomplete="off" />
-            <label>Press Enter to send a new message to <i>@Model.Name</i> group </label>
+            @* <label>Press Enter to send a new message to <i>@Model.Name</i> group </label> *@
+            <label>Aa </label>
         </div>
     </form>
 }

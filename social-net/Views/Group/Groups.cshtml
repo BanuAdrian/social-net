@@ -10,7 +10,7 @@
 {
     @* <h1> Group Id: @group.Id </h1> *@
     <div class="post-container">
-        <span class="h5">@group.Name</span>
+        <span class="h5"><a class="text-dark" asp-controller="Group" asp-action="Index" asp-route-groupId="@group.Id">@group.Name </a></span>
         <span>• group • @((@group.Members.Count == 1) ? "1 member" : $"{@group.Members.Count} members")</span>
 
         <ul class="list-group mb-3 mt-3">
@@ -20,7 +20,13 @@
 
             }
         </ul>
-
+        @*     @foreach (var member in group.Members) *@
+        @*     { *@
+        @*         // de adaugat JoinedAt in Group pt a pastra ordinea *@
+        @*         <ul> *@
+        @*             <li> @member.FirstName @member.LastName </li> *@
+        @*         </ul> *@
+        @*     } *@
         @if (SignInManager.IsSignedIn(User))
         {
             var currentUser = await UserManager.GetUserAsync(User);

@@ -4,30 +4,31 @@
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
+<div class="post-container d-flex justify-content-between align-items-start mb-3">
+    <p class="mb-0 post-comment">
+        @if (!Model.IsAccepted)
+        {
+            <i class="bi bi-hourglass-split"></i>
+        }
+        
+        <b>
+            <a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@Model.User.Id">
+                @Model.User.FirstName @Model.User.LastName
+            </a>
+        </b> 
+        <span>@Model.AddedAt.ToString("• MMMM dd, yyyy, HH:mm")</span>: @Model.Text
+    </p>
 
-
-<p>
-	@if (!Model.IsAccepted)
-	{
-		<i>[waiting for acceptance]</i>
-	}
-	<b>
-		<a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@Model.User.Id">
-
-			@Model.User.FirstName @Model.User.LastName
-		</a>
-	</b>@@ @Model.AddedAt: @Model.Text
-</p>
-
-@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
-{
-	<a class="btn btn-primary" asp-controller="Photo" asp-action="DeleteCommentAdmin" asp-route-photoId="@Model.PhotoId" asp-route-commentId="@Model.Id">Delete Comment</a>
-}
-else if (SignInManager.IsSignedIn(User))
-{
-	var currentUser = await UserManager.GetUserAsync(User);
-	if (Model.User == currentUser)
-	{
-		<a class="btn btn-primary" asp-controller="Photo" asp-action="DeleteOwnComment" asp-route-photoId="@Model.PhotoId" asp-route-commentId="@Model.Id">Delete Comment</a>
-	}
-}
+    @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+    {
+        <a class="btn btn-sm btn-outline-danger ms-2" asp-controller="Photo" asp-action="DeleteCommentAdmin" asp-route-photoId="@Model.PhotoId" asp-route-commentId="@Model.Id"><i class="bi bi-trash3-fill"></i></a>
+    }
+    else if (SignInManager.IsSignedIn(User))
+    {
+        var currentUser = await UserManager.GetUserAsync(User);
+        if (Model.User == currentUser)
+        {
+            <a class="btn btn-sm btn-outline-danger ms-2" asp-controller="Photo" asp-action="DeleteOwnComment" asp-route-photoId="@Model.PhotoId" asp-route-commentId="@Model.Id"><i class="bi bi-trash3-fill"></i></a>
+        }
+    }
+</div>

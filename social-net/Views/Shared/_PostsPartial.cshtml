@@ -1,89 +1,112 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @model social_net.Models.ViewPostModel
-@* <h3>Posts</h3> *@
-@* @foreach (var textPost in Model.TextPosts) *@
-@* { *@
-@* 	<div style="border: 1px solid black; margin-bottom: 25px; padding: 10px; border-radius: 10px"> *@
-@* 		<h4>@Model.FirstName @Model.LastName</h4> *@
-@* 		<p>@textPost.PostedAt</p> *@
-@* 		<p>@textPost.Text</p> *@
-
-
-@* 		@if (User.IsInRole("Admin")) *@
-@* 		{ *@
-@* 			<a class="btn btn-primary" asp-controller="Profile" asp-action="DeletePost" asp-route-profileUserId="@Model.Id" asp-route-textPostId="@textPost.Id">Delete Post</a> *@
-@* 		} *@
-@* 	</div> *@
-
-
-@* } *@
-
-@* <h3>Albums</h3> *@
-@* @foreach (var photoAlbum in Model.PhotoAlbums) *@
-@* { *@
-@* 	<h5>Album created on @photoAlbum.PostedAt</h5> *@
-@* 	@foreach (var photo in photoAlbum.Photos) *@
-@* 	{ *@
-@* 		<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"><img src="@photo.ImagePath" alt="Photo" style="width: 150px; height: 150px; margin: 5px;" /></a> *@
-@* 		@if (User.IsInRole("Admin")) *@
-@* 		{ *@
-@* 			<a class="btn btn-primary" asp-controller="Photo" asp-action="DeletePhoto" asp-route-profileUserId="@Model.Id" asp-route-photoId="@photo.Id">Delete Photo</a> *@
-@* 		} *@
-
-@* 		<br /> *@
-@* 	} *@
-@* 	<br /> *@
-@* } *@
 
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
 @{
 	var returnUrl = Context.Request.Path + Context.Request.QueryString;
+	var firstPhoto = true;
 }
 
-<div style="border: 2px solid black; margin-bottom: 25px; padding: 10px; border-radius: 10px">
+<div class="post-container">
 	@if (Model.Type == "Text")
 	{
-		<h4><a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@Model.TextPost.User.Id">@Model.TextPost.User.FirstName @Model.TextPost.User.LastName</a></h4>
-		<p>@Model.PostedAt</p>
-		<p>@Model.TextPost.Text</p>
+		<div>
+		<span class="h5"><a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@Model.TextPost.User.Id">@Model.TextPost.User.FirstName @Model.TextPost.User.LastName</a></span>
+		<span>@Model.PostedAt.ToString("• MMMM dd, yyyy, HH:mm")</span>
 
+		<p class="text-dark mt-3">@Model.TextPost.Text</p>
+		</div>
 
 		@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
 		{
-			<a class="btn btn-primary" asp-controller="Profile" asp-action="DeletePostAdmin" asp-route-profileUserId="@Model.TextPost.User.Id" asp-route-textPostId="@Model.TextPost.Id" asp-route-returnUrl="@returnUrl">Delete Post</a>
-		} else if (SignInManager.IsSignedIn(User))
+			<a class="btn btn-sm btn-outline-danger" asp-controller="Profile" asp-action="DeletePostAdmin" asp-route-profileUserId="@Model.TextPost.User.Id" asp-route-textPostId="@Model.TextPost.Id" asp-route-returnUrl="@returnUrl">Delete Post</a>
+		}
+		else if (SignInManager.IsSignedIn(User))
 		{
 			var currentUser = await UserManager.GetUserAsync(User);
 			if (currentUser == Model.TextPost.User)
 			{
-				<a class="btn btn-primary" asp-controller="Profile" asp-action="DeleteOwnPost" asp-route-profileUserId="@Model.TextPost.User.Id" asp-route-textPostId="@Model.TextPost.Id" asp-route-returnUrl="@returnUrl">Delete Post</a>
+				<a class="btn btn-sm btn-outline-danger" asp-controller="Profile" asp-action="DeleteOwnPost" asp-route-profileUserId="@Model.TextPost.User.Id" asp-route-textPostId="@Model.TextPost.Id" asp-route-returnUrl="@returnUrl"><i class="bi bi-trash3-fill"></i></a>
 			}
 		}
 	}
 	else
 	{
-		<h4><a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@Model.PhotoAlbum.User.Id">@Model.PhotoAlbum.User.FirstName @Model.PhotoAlbum.User.LastName</a></h4>
-		<p>@Model.PostedAt</p>
-		@foreach (var photo in Model.PhotoAlbum.Photos)
-		{
-			<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"><img src="@photo.ImagePath" alt="Photo" style="width: 150px; height: 150px; margin: 5px;" /></a>
-			@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
-			{
-				<a class="btn btn-primary" asp-controller="Photo" asp-action="DeletePhotoAdmin" asp-route-profileUserId="@Model.PhotoAlbum.User.Id" asp-route-photoId="@photo.Id" asp-route-returnUrl="@returnUrl">Delete Photo</a>
-			}
-			else if (SignInManager.IsSignedIn(User))
-			{
-				var currentUser = await UserManager.GetUserAsync(User);
-				if (currentUser == Model.PhotoAlbum.User)
-				{
-					<a class="btn btn-primary" asp-controller="Photo" asp-action="DeleteOwnPhoto" asp-route-profileUserId="@Model.PhotoAlbum.User.Id" asp-route-photoId="@photo.Id" asp-route-returnUrl="@returnUrl">Delete Photo</a>
-				}
-			}
+		<span class="h5"><a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@Model.PhotoAlbum.User.Id">@Model.PhotoAlbum.User.FirstName @Model.PhotoAlbum.User.LastName</a></span>
+		<span>@Model.PostedAt.ToString("• MMMM dd, yyyy, HH:mm")</span>
 
-			<br />
-		}
-		<br />
+		var carouselId = Model.PhotoAlbum.Id;
+
+		<div id="carouselControls-@carouselId" class="carousel carousel-light slide mt-3" data-bs-ride="carousel">
+			<div class="carousel-indicators">
+				@{
+					var photoNumber = 0;
+					foreach (var photo in Model.PhotoAlbum.Photos)
+					{
+						if (photoNumber == 0)
+						{
+							<button type="button" data-bs-target="carouselControls-@carouselId" data-bs-slide-to="@photoNumber" class="active" aria-current="true" aria-label="Photo @(photoNumber + 1)"></button>
+
+						} else
+						{
+							<button type="button" data-bs-target="carouselControls-@carouselId" data-bs-slide-to="@photoNumber" aria-label="Photo @(photoNumber + 1)"></button>
+
+						}
+						photoNumber++;
+					}
+				}
+			</div>	
+			<div class="carousel-inner">
+
+				@foreach (var photo in Model.PhotoAlbum.Photos)
+				{
+					if (firstPhoto)
+					{
+						<div class="carousel-item active">
+							 <a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"> 
+								<img class="d-block w-100" src="@photo.ImagePath" alt="Photo">
+								 </a> 
+						</div>
+						firstPhoto = false;
+					} else
+					{
+						<div class="carousel-item">
+							<a asp-controller="Photo" asp-action="Index" asp-route-photoId="@photo.Id"> 
+								<img class="d-block w-100" src="@photo.ImagePath" alt="Photo">
+								 </a> 
+						</div>
+					}
+
+
+					/*
+					@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+					{
+						<a class="btn btn-primary" asp-controller="Photo" asp-action="DeletePhotoAdmin" asp-route-profileUserId="@Model.PhotoAlbum.User.Id" asp-route-photoId="@photo.Id" asp-route-returnUrl="@returnUrl"><i class="bi bi-trash3-fill"></i></a>
+					}
+					else if (SignInManager.IsSignedIn(User))
+					{
+					var currentUser = await UserManager.GetUserAsync(User);
+					if (currentUser == Model.PhotoAlbum.User)
+					{
+							<a class="btn btn-primary" asp-controller="Photo" asp-action="DeleteOwnPhoto" asp-route-profileUserId="@Model.PhotoAlbum.User.Id" asp-route-photoId="@photo.Id" asp-route-returnUrl="@returnUrl"><i class="bi bi-trash3-fill"></i></a>
+					}
+					}
+					*/
+			@* <br /> *@
+				}
+			</div>
+		<button class="carousel-control-prev" type="button" data-bs-target="#carouselControls-@carouselId" data-bs-slide="prev">
+			<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+			<span class="visually-hidden">Previous</span>
+		</button>
+		<button class="carousel-control-next" type="button" data-bs-target="#carouselControls-@carouselId" data-bs-slide="next">
+			<span class="carousel-control-next-icon" aria-hidden="true"></span>
+			<span class="visually-hidden">Next</span>
+		</button>
+		</div>
+		firstPhoto = true;
+		@* <br /> *@
 	}
 </div>

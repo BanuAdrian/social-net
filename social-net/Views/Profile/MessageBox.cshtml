@@ -12,8 +12,9 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
-    <h3> Conversation with @Model.FirstName @Model.LastName </h3>
-
+    <div class="post-container">
+        <h3> Conversation with @Model.FirstName @Model.LastName </h3>
+    </div>
     var currentUser = await UserManager.GetUserAsync(User);
     currentUser = await _appDbContext.Users
         .Include(u => u.SentMessages)
@@ -34,7 +35,8 @@
         <form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-profileUserId="@Model.Id" method="post">
             <div id="bottom" class="form-floating mb-3">
                 <input class="form-control" name="messageContent" autocomplete="off" />
-                <label>Press Enter to send a new message to @Model.FirstName @Model.LastName </label>
+                <label>Aa</label>
+                @* <label>Press Enter to send a new message to @Model.FirstName @Model.LastName </label> *@
             </div>
         </form>
     } else

@@ -11,5 +11,7 @@ namespace social_net.Models
         public PhotoAlbum PhotoAlbum { get; set; }
         public User User { get; set; }
 
+        //public int PostNumber { get; set; }
+
     }
 }

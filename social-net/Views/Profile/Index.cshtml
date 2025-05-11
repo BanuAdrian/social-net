@@ -6,7 +6,7 @@
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
-<h1>@Model.FirstName @Model.LastName</h1>
+
 @{
 	bool noPostsShown = true;
 }
@@ -16,40 +16,52 @@
 	var currentUser = await UserManager.GetUserAsync(User);
 	if (currentUser == Model)
 	{
-		<a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Edit Account</a>
-		<partial name="_CreatePartial" model="currentUser"/>
-	} else
+		<div class="post-container">
+			<h1>@Model.FirstName @Model.LastName</h1>
+			<a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage"><i class="bi bi-pencil-fill"></i> Edit Account</a>
+		</div>
+		<partial name="_CreatePartial" model="currentUser" />
+	}
+	else
 	{
+
 		if (Model.AllFriendships.Any(fr => fr.InitiatorUserId == currentUser.Id || fr.RecipientUserId == currentUser.Id))
 		{
-			<p> You are friends! </p>
+			<div class="post-container">
+				<h1>@Model.FirstName @Model.LastName</h1>
+				<a class="btn btn-primary" asp-action="MessageBox" asp-route-profileUserId="@Model.Id">Message</a>
+			</div>
+			@* <p> You are friends! </p> *@
 			@* <button class="btn btn-primary" asp-controller="Message" asp-action="Index" asp-route-profileUserId="@Model.Id">Message</button> *@
-			<a class="btn btn-primary" asp-action="MessageBox" asp-route-profileUserId="@Model.Id">Message</a>
 		}
 		else
 		{
-			if (Model.ReceivedFriendRequests.Any(fr => fr.SenderId == currentUser.Id))
-			{
-				<p> Ai trimis o cerere de prietenie acestui utilizator. </p>
-			}
-			else if (Model.SentFriendRequests.Any(fr => fr.ReceiverId == currentUser.Id))
-			{
-				@* <p> Ai primit o cerere de prietenie de la acest utilizator. </p> *@
+			<div class="post-container">
+				<h1>@Model.FirstName @Model.LastName</h1>
+				@if (Model.ReceivedFriendRequests.Any(fr => fr.SenderId == currentUser.Id))
+				{
+					<p> Ai trimis o cerere de prietenie acestui utilizator. </p>
+				}
+				else if (Model.SentFriendRequests.Any(fr => fr.ReceiverId == currentUser.Id))
+				{
+					@* <p> Ai primit o cerere de prietenie de la acest utilizator. </p> *@
 
-				<form asp-action="AcceptFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-					<button type="submit" class="btn btn-primary">Accept Friend</button>
-				</form>
+					<form asp-action="AcceptFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+						<button type="submit" class="btn btn-primary">Accept Friend</button>
+					</form>
 
-				<form asp-action="DeclineFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-					<button type="submit" class="btn btn-primary">Decline Friend</button>
-				</form>
-			}
-			else
-			{
-				<form asp-action="AddFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-					<button type="submit" class="btn btn-primary">Add Friend</button>
-				</form>
-			}
+					<form asp-action="DeclineFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+						<button type="submit" class="btn btn-primary">Decline Friend</button>
+					</form>
+				}
+				else
+				{
+					<form asp-action="AddFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+						<button type="submit" class="btn btn-primary">Add Friend</button>
+					</form>
+				}
+			</div>
+
 		}
 	}
 	if (User.IsInRole("Admin") || currentUser == Model || Model.HasPublicProfile || Model.Friends.Contains(currentUser))
@@ -83,7 +95,9 @@
 					}));
 
 		var sortedPosts = posts.OrderByDescending(p => p.PostedAt);
-		<h1>Posts</h1>
+		<div class="post-container">
+			<h3>Posts</h3>
+		</div>
 		foreach (var post in sortedPosts)
 		{
 			noPostsShown = false;
@@ -94,6 +108,9 @@
 }
 else if (Model.HasPublicProfile)
 {
+	<div class="post-container">
+		<h1>@Model.FirstName @Model.LastName</h1>
+	</div>
 	@* <partial name="_ProfilePartial" /> *@
 	var posts = new List<ViewPostModel>();
 
@@ -112,7 +129,10 @@ else if (Model.HasPublicProfile)
 				}));
 
 	var sortedPosts = posts.OrderByDescending(p => p.PostedAt);
-	<h1>Posts</h1>
+
+	<div class="post-container">
+		<h3>Posts</h3>
+	</div>
 
 	foreach (var post in sortedPosts)
 	{
@@ -120,14 +140,25 @@ else if (Model.HasPublicProfile)
 		<partial name="_PostsPartial" model="post" />
 	}
 
-} else 
+}
+else
 {
+	<div class="post-container">
+		<h1>@Model.FirstName @Model.LastName</h1>
+	</div>
+	<div class="post-container">
+		<h5>@Model.FirstName has a private profile</h5>
+		<a class="btn btn-primary text-light" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+		or
+		<a class="btn btn-secondary text-light" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+		to connect
+
+	</div>
 	noPostsShown = false;
-	<h5>This user has a private profile</h5>
 }
 
 
-@if (noPostsShown)
-{
-	<h3>This user has no posts</h3>
-}
+@* @if (noPostsShown) *@
+@* { *@
+@* 	<h3>This user has no posts</h3> *@
+@* } *@

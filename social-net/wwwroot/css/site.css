@@ -1,23 +1,105 @@
+﻿:root {
+    /*    --color1: #00408C;
+    --color2: #96ADD6;
+    --color3: #E85234;
+    --color4: #F9B8AF;
+    --color5: #F2EEE9;
+    --color6: #F2D7D3;*/
+    /*    --color1: #E68B67;
+    --color2: #FAF5E0;
+    --color3: #087167;
+    --color4: #86C7D6;*/
+
+    --color1: #282828;
+    --color2: #F9F6EF;
+    --color3: #193497;
+    --color4: #EDA398;
+}
+
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
-  padding-top: 60px;
+    /*    margin-bottom: 60px;*/
+    padding-top: 60px;
+    background-color: var(--color2);
+    font-family: "Roboto", sans-serif !important;
+    font-optical-sizing: auto;
+    font-weight: 300;
+    font-style: normal;
+    font-variation-settings: "wdth" 100;
+}
+
+.btn-primary {
+    background-color: var(--color4);
+    border-color: var(--color2);
+}
+
+.navbar {
+    background-color: var(--color3);
+}
+
+/*.navbar-text,
+.navbar-brand,
+.nav-link {
+    color: var(--color2) !important;
+}*/
+
+.post-container {
+    background-color: var(--color2);
+    color: var(--color1);
+    border: 1px solid var(--color1);
+    margin-bottom: 25px;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 5px 5px grey;
+}
+
+a {
+    text-decoration: none;
+    color: var(--color1);
+}
+
+.text-light {
+    color: var(--color2) !important;
+}
+
+.post-container {
+    text-align: justify;
+}
+
+.btn-secondary {
+    background-color: var(--color3);
+    border-color: var(--color2);
+}
+
+.post-comment {
+    text-align: initial;
+}
+
+.post-container hr:last-of-type {
+    display: none;
+}
+
+.dropdown-menu {
+    overflow: hidden;
+    overflow-y: auto;
+    max-height: calc(100vh - 150px);
+/*    width: 15vw !important;*/
 }

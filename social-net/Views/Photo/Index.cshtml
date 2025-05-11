@@ -10,52 +10,73 @@
 
 @if (Model == null)
 {
-    <h1>The photo couldn't be found (it might have been deleted)</h1>
-} else
+	<div class="post-container">
+
+		<h1>The photo couldn't be found (it might have been deleted)</h1>
+	</div>
+
+}
+else
 {
-    <h1>Photo posted by @Model.Album.User.FirstName @Model.Album.User.LastName</h1>
-    <img src="@Model.ImagePath" alt="Photo" style="margin-bottom: 25px" />
+	<div class="post-container">
+		<h1>Photo posted by @Model.Album.User.FirstName @Model.Album.User.LastName</h1>
+	</div>
+	<div class="post-container">
+		@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+		{
+			<a class="btn btn-sm btn-outline-danger" asp-controller="Photo" asp-action="DeletePhotoAdmin" asp-route-profileUserId="@Model.Album.User.Id" asp-route-photoId="@Model.Id"><i class="bi bi-trash3-fill"></i></a>
+		}
+		else if (SignInManager.IsSignedIn(User))
+		{
+			var currentUser = await UserManager.GetUserAsync(User);
+			if (currentUser == Model.Album.User)
+			{
+				<a class="btn btn-sm btn-outline-danger" asp-controller="Photo" asp-action="DeleteOwnPhoto" asp-route-profileUserId="@Model.Album.User.Id" asp-route-photoId="@Model.Id"><i class="bi bi-trash3-fill"></i></a>
+			}
+		}
+		<img class="d-block w-100 mb-3 mt-3" src="@Model.ImagePath" alt="Photo" />
+	</div>
+	@if (SignInManager.IsSignedIn(User))
+	{
+		var currentUser = await UserManager.GetUserAsync(User);
 
-    @if (SignInManager.IsSignedIn(User))
-    {
-        var currentUser = await UserManager.GetUserAsync(User);
+		@foreach (var comment in Model.Comments)
+		{
+			<article>
+				@if (Model.Album.User == currentUser && comment.User != currentUser && !comment.IsAccepted)
+				{
+					<a asp-action="AcceptComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Accept</a> <a asp-action="DeclineComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Decline</a>
+				}
+				@if (Model.Album.User == currentUser || comment.User == currentUser || comment.IsAccepted)
+				{
+					<partial name="_CommentPartial" model="comment" />
+				}
+			</article>
+		}
 
-        @foreach (var comment in Model.Comments)
-        {
-            <article>
-                @if (Model.Album.User == currentUser && comment.User != currentUser && !comment.IsAccepted)
-                {
-                    <a asp-action="AcceptComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Accept</a> <a asp-action="DeclineComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Decline</a>
-                }
-                @if (Model.Album.User == currentUser || comment.User == currentUser || comment.IsAccepted )
-                {
-                    <partial name="_CommentPartial" model="comment" />
-                }
-            </article>
-        }
-
-        @if (Model.Album.User == currentUser || Model.Album.User.HasPublicProfile || Model.Album.User.Friends.Contains(currentUser))
-        {
-            <form asp-action="AddComment" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-                <div id="bottom" class="form-floating mb-3">
-                    <input class="form-control" name="commentContent" autocomplete="off" />
-                    <label>Press Enter to add a new comment</label>
-                </div>
-            </form>
-        }
-    }
-    else
-    {
-        @foreach (var comment in Model.Comments)
-        {
-            <article>
-                @if (comment.IsAccepted)
-                {
-                    <partial name="_CommentPartial" model="comment" />
-                }
-            </article>
-        }
-    }
+		@if (Model.Album.User == currentUser || Model.Album.User.HasPublicProfile || Model.Album.User.Friends.Contains(currentUser))
+		{
+			<form asp-action="AddComment" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+				<div id="bottom" class="form-floating mt-5">
+					<input class="form-control" name="commentContent" autocomplete="off" />
+					@* <label>Press Enter to add a new comment</label> *@
+					<label>Write a comment...</label>
+				</div>
+			</form>
+		}
+	}
+	else
+	{
+		@foreach (var comment in Model.Comments)
+		{
+			<article>
+				@if (comment.IsAccepted)
+				{
+					<partial name="_CommentPartial" model="comment" />
+				}
+			</article>
+		}
+	}
 }
 
 

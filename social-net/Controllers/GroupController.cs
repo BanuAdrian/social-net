@@ -17,19 +17,29 @@ namespace social_net.Controllers
             _appDbContext = appDbContext;
         }
 
-        public IActionResult Index(int groupId)
+        //public IActionResult Index(int groupId)
+        //{
+        //    var group = _appDbContext.Groups
+        //        .Include(gr => gr.GroupMemberships)
+        //        .ThenInclude(gm => gm.Member)
+        //        .FirstOrDefault(gr => gr.Id.Equals(groupId));
+        //    if (group != null)
+        //    {
+        //        return View(group);
+        //    }
+        //    return RedirectToAction("Index", "Home");
+        //}
+
+        public IActionResult Index()
         {
-            var group = _appDbContext.Groups
+            var groups = _appDbContext
+                .Groups
                 .Include(gr => gr.GroupMemberships)
                 .ThenInclude(gm => gm.Member)
-                .FirstOrDefault(gr => gr.Id.Equals(groupId));
-            if (group != null)
-            {
-                return View(group);
-            }
-            return RedirectToAction("Index", "Home");
-        }
+                .ToList();
 
+            return View(groups);
+        }
         public IActionResult CreateGroup()
         {
             return View();
@@ -48,7 +58,8 @@ namespace social_net.Controllers
                 _appDbContext.SaveChanges();
 
 
-                return RedirectToAction("Index", "Group", new { groupId = group.Id});
+                return RedirectToAction("Index", "Group");
+                //return RedirectToAction("Index", "Group", new { groupId = group.Id});
             }
             return View();
         }
@@ -68,7 +79,8 @@ namespace social_net.Controllers
             _appDbContext.GroupMemberships.Add(groupMembership);
             _appDbContext.SaveChanges();
 
-            return RedirectToAction("Index", "Group", new { groupId = group.Id });
+            return RedirectToAction("Index", "Group");
+            //return RedirectToAction("Index", "Group", new { groupId = group.Id });
         }
 
         public IActionResult MessageBox(int groupId)
