@@ -1,27 +1,30 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @model social_net.Models.Group
-@{
-}
 
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 
-@if (SignInManager.IsSignedIn(User)) {
+@if (SignInManager.IsSignedIn(User))
+{
     var currentUser = await UserManager.GetUserAsync(User);
-    <div class="row">
-        <div class="col-md-4">
-            <form method="post" asp-action="CreateGroup" asp-route-currentUserId="@currentUser.Id">
-                <h2>Create a new group.</h2>
-                <hr />
 
-                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="container mt-4">
+        <div class="card shadow-sm p-4">
+            <h2 class="text-primary">Create a new group</h2>
+            <hr>
+
+            <form method="post" asp-action="CreateGroup" asp-route-currentUserId="@currentUser.Id">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
                 <div class="form-floating mb-3">
-                    <input asp-for="@Model.Name" class="form-control" aria-required="true" />
+                    <input asp-for="@Model.Name" class="form-control" aria-required="true" placeholder="Enter group name" />
                     <label asp-for="@Model.Name">Group Name</label>
                     <span asp-validation-for="@Model.Name" class="text-danger"></span>
                 </div>
 
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Create group</button>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-plus-lg"></i> Create Group
+                </button>
             </form>
         </div>
     </div>

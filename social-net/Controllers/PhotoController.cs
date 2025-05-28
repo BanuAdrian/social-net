@@ -45,8 +45,38 @@ namespace social_net.Controllers
 
             var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
 
-            // DE ADAUGAT IS ACCEPTED FEATURE
             var comment = new PhotoComment { User = currentUser, Text = commentContent, Photo = photo, AddedAt = DateTime.Now, IsAccepted = (currentUser == photo.Album.User) ? true : false };
+
+            _appDbContext.PhotoComments.Add(comment);
+
+            if (currentUser != photo.Album.User)
+            {
+                Notification notification = new Notification()
+                {
+                    User = photo.Album.User,
+                    Content = currentUser.FirstName + " " + currentUser.LastName + " added a comment to your photo",
+                    RedirectUrl = Url.Action("Index", "Photo", new { photoId = photoId })
+                };
+                _appDbContext.Notifications.Add(notification);
+            }
+
+            _appDbContext.SaveChanges();
+
+            return RedirectToAction("Index", "Photo", new { photoId = photoId });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public IActionResult AddCommentAdmin(string commentContent, int photoId, string currentUserId)
+        {
+            var photo = _appDbContext.Photos
+                .Include(p => p.Album)
+                .ThenInclude(a => a.User)
+                .FirstOrDefault(p => p.Id.Equals(photoId));
+
+            var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
+
+            var comment = new PhotoComment { User = currentUser, Text = commentContent, Photo = photo, AddedAt = DateTime.Now, IsAccepted = true };
 
             _appDbContext.PhotoComments.Add(comment);
 

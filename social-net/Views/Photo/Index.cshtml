@@ -1,85 +1,177 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @model social_net.Models.Photo
-@{
-}
 
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 @inject social_net.Data.AppDbContext _appDbContext
 
-@if (Model == null)
-{
-	<div class="post-container">
-
-		<h1>The photo couldn't be found (it might have been deleted)</h1>
-	</div>
-
-}
-else
-{
-	<div class="post-container">
-		<h1>Photo posted by @Model.Album.User.FirstName @Model.Album.User.LastName</h1>
-	</div>
-	<div class="post-container">
-		@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
-		{
-			<a class="btn btn-sm btn-outline-danger" asp-controller="Photo" asp-action="DeletePhotoAdmin" asp-route-profileUserId="@Model.Album.User.Id" asp-route-photoId="@Model.Id"><i class="bi bi-trash3-fill"></i></a>
-		}
-		else if (SignInManager.IsSignedIn(User))
-		{
-			var currentUser = await UserManager.GetUserAsync(User);
-			if (currentUser == Model.Album.User)
-			{
-				<a class="btn btn-sm btn-outline-danger" asp-controller="Photo" asp-action="DeleteOwnPhoto" asp-route-profileUserId="@Model.Album.User.Id" asp-route-photoId="@Model.Id"><i class="bi bi-trash3-fill"></i></a>
-			}
-		}
-		<img class="d-block w-100 mb-3 mt-3" src="@Model.ImagePath" alt="Photo" />
-	</div>
-	@if (SignInManager.IsSignedIn(User))
-	{
-		var currentUser = await UserManager.GetUserAsync(User);
-
-		@foreach (var comment in Model.Comments)
-		{
-			<article>
-				@if (Model.Album.User == currentUser && comment.User != currentUser && !comment.IsAccepted)
-				{
-					<a asp-action="AcceptComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Accept</a> <a asp-action="DeclineComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-primary">Decline</a>
-				}
-				@if (Model.Album.User == currentUser || comment.User == currentUser || comment.IsAccepted)
-				{
-					<partial name="_CommentPartial" model="comment" />
-				}
-			</article>
-		}
-
-		@if (Model.Album.User == currentUser || Model.Album.User.HasPublicProfile || Model.Album.User.Friends.Contains(currentUser))
-		{
-			<form asp-action="AddComment" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-				<div id="bottom" class="form-floating mt-5">
-					<input class="form-control" name="commentContent" autocomplete="off" />
-					@* <label>Press Enter to add a new comment</label> *@
-					<label>Write a comment...</label>
-				</div>
-			</form>
-		}
-	}
-	else
-	{
-		@foreach (var comment in Model.Comments)
-		{
-			<article>
-				@if (comment.IsAccepted)
-				{
-					<partial name="_CommentPartial" model="comment" />
-				}
-			</article>
-		}
-	}
+@{
+    var currentUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    bool isOwnPhoto = currentUser != null && Model != null && currentUser == Model.Album.User;
+    bool isFriend = currentUser != null && currentUser.Friends.Contains(currentUser);
+    bool canViewPhoto = isOwnPhoto || isFriend || (Model != null && Model.Album.User.HasPublicProfile);
 }
 
+<div class="container mt-4">
+    @if (Model == null || (!User.IsInRole("Admin") && !canViewPhoto))
+    {
+        <div class="card shadow-sm p-4 text-center">
+            <h1 class="text-danger">Photo not found</h1>
+            <p class="text-muted">The photo might have been deleted or is unavailable.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="mb-0">Photo by @Model.Album.User.FirstName @Model.Album.User.LastName</h1>
 
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <div class="d-flex gap-2 ms-auto">
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a class="btn btn-outline-danger btn-sm" asp-controller="Photo" asp-action="DeletePhotoAdmin" asp-route-profileUserId="@Model.Album.User.Id" asp-route-photoId="@Model.Id">
+                                <i class="bi bi-trash3-fill"></i> Delete
+                            </a>
+                        }
+                        else if (isOwnPhoto)
+                        {
+                            <a class="btn btn-outline-danger btn-sm" asp-controller="Photo" asp-action="DeleteOwnPhoto" asp-route-profileUserId="@Model.Album.User.Id" asp-route-photoId="@Model.Id">
+                                <i class="bi bi-trash3-fill"></i> Delete
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
 
+            <hr>
 
+            <img class="d-block w-100 rounded mt-3" src="@Model.ImagePath" alt="Photo">
 
+            <hr>
+
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <div class="comments-section mt-4">
+                    <h4 class="text-primary">Comments</h4>
+
+                    @foreach (var comment in Model.Comments)
+                    {
+                        <article class="mb-3">
+                            @* @if (isOwnPhoto && comment.User != currentUser && !comment.IsAccepted) *@
+                            @* { *@
+                            @*     <a asp-action="AcceptComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-success btn-sm">Accept</a> *@
+                            @*     <a asp-action="DeclineComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-outline-danger btn-sm">Decline</a> *@
+                            @* } *@
+
+                            @if (isOwnPhoto || comment.User == currentUser || comment.IsAccepted)
+                            {
+                                @* <partial name="_CommentPartial" model="comment" /> *@
+                                <div class="card shadow-sm p-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi @(comment.IsAccepted ? "bi-chat-left-text" : "bi-hourglass-split") text-muted me-2"></i>
+
+                                            <b>
+                                                <a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@comment.User.Id" class="text-decoration-none text-dark">
+                                                    @comment.User.FirstName @comment.User.LastName
+                                                </a>
+                                            </b>
+
+                                            <span class="text-muted ms-2">@comment.AddedAt.ToString("• MMMM dd, yyyy, HH:mm")</span>
+                                        </div>
+
+                                        <div class="d-flex gap-2">
+                                            @if (isOwnPhoto && comment.User != currentUser && !comment.IsAccepted)
+                                            {
+                                                <a asp-action="AcceptComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-success btn-sm">Accept</a>
+                                                <a asp-action="DeclineComment" asp-route-photoId="@Model.Id" asp-route-commentId="@comment.Id" class="btn btn-outline-danger btn-sm">Decline</a>
+                                            } 
+                                            else
+                                            {
+                                                @if (User.IsInRole("Admin"))
+                                                {
+                                                    <a class="btn btn-sm btn-outline-danger" asp-controller="Photo" asp-action="DeleteCommentAdmin" asp-route-photoId="@comment.PhotoId" asp-route-commentId="@comment.Id">
+                                                        <i class="bi bi-trash3-fill"></i>
+                                                    </a>
+                                                }
+                                                else if (isOwnPhoto || comment.User == currentUser)
+                                                {
+                                                    <a class="btn btn-sm btn-outline-danger" asp-controller="Photo" asp-action="DeleteOwnComment" asp-route-photoId="@comment.PhotoId" asp-route-commentId="@comment.Id">
+                                                        <i class="bi bi-trash3-fill"></i>
+                                                    </a>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 mb-0 text-dark">@comment.Text</p>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="mt-4">
+                        <h5 class="text-primary">Add a comment</h5>
+                        <form asp-action="AddCommentAdmin" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+                            <div class="form-floating mb-3">
+                                <input class="form-control" name="commentContent" autocomplete="off" placeholder="Write a comment...">
+                                <label>Write a comment...</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                        </form>
+                    </div>
+                } 
+                else if (canViewPhoto)
+                {
+                    <div class="mt-4">
+                        <h5 class="text-primary">Add a comment</h5>
+                        <form asp-action="AddComment" asp-route-photoId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+                            <div class="form-floating mb-3">
+                                <input class="form-control" name="commentContent" autocomplete="off" placeholder="Write a comment...">
+                                <label>Write a comment...</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                        </form>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="comments-section mt-4">
+                    <h4 class="text-primary">Comments</h4>
+
+                    @foreach (var comment in Model.Comments)
+                    {
+                        <article class="mb-3">
+                            @if (comment.IsAccepted)
+                            {
+                                @* <partial name="_CommentPartial" model="comment" /> *@
+                                <div class="card shadow-sm p-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi @(comment.IsAccepted ? "bi-chat-left-text" : "bi-hourglass-split") text-muted me-2"></i>
+
+                                            <b>
+                                                <a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@comment.User.Id" class="text-decoration-none text-dark">
+                                                    @comment.User.FirstName @comment.User.LastName
+                                                </a>
+                                            </b>
+
+                                            <span class="text-muted ms-2">@comment.AddedAt.ToString("• MMMM dd, yyyy, HH:mm")</span>
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 mb-0 text-dark">@comment.Text</p>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>

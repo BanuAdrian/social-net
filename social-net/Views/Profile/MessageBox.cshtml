@@ -12,9 +12,14 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
-    <div class="post-container">
-        <h3> Conversation with @Model.FirstName @Model.LastName </h3>
+    <div class="container mt-4">
+        <div class="card shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class ="text-primary mb-0"> Conversation with @Model.FirstName @Model.LastName </h3>
+            </div>
+        </div>
     </div>
+
     var currentUser = await UserManager.GetUserAsync(User);
     currentUser = await _appDbContext.Users
         .Include(u => u.SentMessages)
@@ -31,17 +36,25 @@
             }
             <partial name="_MessagePartial" model="allMessages" />
         </section>
-
-        <form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-profileUserId="@Model.Id" method="post">
-            <div id="bottom" class="form-floating mb-3">
-                <input class="form-control" name="messageContent" autocomplete="off" />
-                <label>Aa</label>
-                @* <label>Press Enter to send a new message to @Model.FirstName @Model.LastName </label> *@
+        <div class="container mt-4">
+            <div class="card shadow-sm p-4">
+                <form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-profileUserId="@Model.Id" method="post">
+                        <div class="input-group mb-3">
+                        <input id="bottom" class="form-control" name="messageContent" autocomplete="off" placeholder="Type a message...">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send-fill"></i> Send
+                        </button>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     } else
     {
-        <h5> You cannot chat with yourself! </h5>
+        <div class="container mt-4">
+            <div class="card shadow-sm p-4 text-center">
+                <h5 class="text-danger">You cannot chat with yourself! </h5>
+            </div>
+        </div>
     }
 }
 

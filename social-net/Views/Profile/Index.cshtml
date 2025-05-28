@@ -8,157 +8,128 @@
 
 
 @{
-	bool noPostsShown = true;
+    var currentUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    bool isOwnProfile = currentUser != null && currentUser == Model;
+    // bool isFriend = Model.AllFriendships.Any(fr => fr.InitiatorUserId == currentUser.Id || fr.RecipientUserId == currentUser.Id);
+    bool isFriend = currentUser != null && Model.Friends.Contains(currentUser);
+    bool canViewPosts = isOwnProfile || User.IsInRole("Admin") || Model.HasPublicProfile || isFriend;
+
+    var posts = new List<ViewPostModel>();
+    if (canViewPosts)
+    {
+        posts.AddRange(Model.TextPosts.Select(tp => new ViewPostModel { Type = "Text", TextPost = tp, PostedAt = tp.PostedAt }));
+        posts.AddRange(Model.PhotoAlbums.Select(pa => new ViewPostModel { Type = "Photo", PhotoAlbum = pa, PostedAt = pa.PostedAt }));
+        posts = posts.OrderByDescending(p => p.PostedAt).ToList();
+    }
 }
 
-@if (SignInManager.IsSignedIn(User))
+<div class="container mt-4">
+    <div class="card shadow-sm p-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="mb-0">@Model.FirstName @Model.LastName</h1>
+
+            <div class="d-flex gap-2 ms-auto">
+                @if (isOwnProfile)
+                {
+                    <a class="btn btn-outline-primary btn-sm" asp-area="Identity" asp-page="/Account/Manage/Index">
+                        <i class="bi bi-pencil-fill"></i> Edit Profile
+                    </a>
+                }
+                else if (SignInManager.IsSignedIn(User))
+                {
+                    @if (isFriend)
+                    {
+                        <a class="btn btn-primary btn-sm" asp-action="MessageBox" asp-route-profileUserId="@Model.Id">
+                            <i class="bi bi-chat-dots-fill"></i> Message
+                        </a>
+                    }
+                    else if (Model.ReceivedFriendRequests.Any(fr => fr.SenderId == currentUser.Id))
+                    {
+                        <p class="text-muted">Friend request sent</p>
+                    }
+                    else if (Model.SentFriendRequests.Any(fr => fr.ReceiverId == currentUser.Id))
+                    {
+                        <form asp-action="AcceptFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+                            <button type="submit" class="btn btn-success btn-sm">Accept Friend</button>
+                        </form>
+                        <form asp-action="DeclineFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Decline Friend</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="AddFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-person-plus-fill"></i> Add Friend
+                            </button>
+                        </form>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@if(isOwnProfile)
 {
-	var currentUser = await UserManager.GetUserAsync(User);
-	if (currentUser == Model)
-	{
-		<div class="post-container">
-			<h1>@Model.FirstName @Model.LastName</h1>
-			<a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage"><i class="bi bi-pencil-fill"></i> Edit Account</a>
+    <partial name="_CreatePartial" model="currentUser" />
+}
+
+
+@if(canViewPosts)
+{
+    @if(!SignInManager.IsSignedIn(User))
+    {
+        <div class="container mt-4">
+            <div class="card shadow-sm p-4 mt-4 text-center">
+                <p>Register or login to connect.</p>
+                <a class="btn btn-primary text-light w-100 mt-2" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                <a class="btn btn-secondary text-light w-100 mt-2" asp-area="Identity" asp-page="/Account/Login">Login</a>
+            </div>
+        </div>
+    }
+    @if(posts.Count == 0)
+    {
+        <div class="container mt-4">
+            <div class="card shadow-sm p-4 mt-4 text-center">
+                @if(isOwnProfile)
+                {
+                    <h5 class="text-muted">You don't have any posts</h5>
+                } else {
+                    <h5 class="text-muted">@Model.FirstName has no posts</h5>
+                }
+            </div>
+        </div>
+    } else
+    {
+        <div class="container mt-4">
+            <div class="card shadow-sm p-4">
+                <h3>Posts</h3>
+            </div>
+        </div>
+        foreach (var post in posts)
+        {
+            <partial name="_PostsPartial" model="post" />
+        }
+    }
+}
+else if (SignInManager.IsSignedIn(User) && !Model.HasPublicProfile)
+{
+    <div class="container mt-4">
+        <div class="card shadow-sm p-4 mt-4 text-center">
+            <h5 class="text-muted">@Model.FirstName has a private profile</h5>
+        </div>
+    </div>
+}
+else if (!SignInManager.IsSignedIn(User) && !Model.HasPublicProfile)
+{
+	<div class="container mt-4">
+		<div class="card shadow-sm p-4 mt-4 text-center">
+			<h5 class="text-muted">@Model.FirstName has a private profile</h5>
+			<p>Register or login to connect.</p>
+			<a class="btn btn-primary text-light w-100 mt-2" asp-area="Identity" asp-page="/Account/Register">Register</a>
+			<a class="btn btn-secondary text-light w-100 mt-2" asp-area="Identity" asp-page="/Account/Login">Login</a>
 		</div>
-		<partial name="_CreatePartial" model="currentUser" />
-	}
-	else
-	{
-
-		if (Model.AllFriendships.Any(fr => fr.InitiatorUserId == currentUser.Id || fr.RecipientUserId == currentUser.Id))
-		{
-			<div class="post-container">
-				<h1>@Model.FirstName @Model.LastName</h1>
-				<a class="btn btn-primary" asp-action="MessageBox" asp-route-profileUserId="@Model.Id">Message</a>
-			</div>
-			@* <p> You are friends! </p> *@
-			@* <button class="btn btn-primary" asp-controller="Message" asp-action="Index" asp-route-profileUserId="@Model.Id">Message</button> *@
-		}
-		else
-		{
-			<div class="post-container">
-				<h1>@Model.FirstName @Model.LastName</h1>
-				@if (Model.ReceivedFriendRequests.Any(fr => fr.SenderId == currentUser.Id))
-				{
-					<p> Ai trimis o cerere de prietenie acestui utilizator. </p>
-				}
-				else if (Model.SentFriendRequests.Any(fr => fr.ReceiverId == currentUser.Id))
-				{
-					@* <p> Ai primit o cerere de prietenie de la acest utilizator. </p> *@
-
-					<form asp-action="AcceptFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-						<button type="submit" class="btn btn-primary">Accept Friend</button>
-					</form>
-
-					<form asp-action="DeclineFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-						<button type="submit" class="btn btn-primary">Decline Friend</button>
-					</form>
-				}
-				else
-				{
-					<form asp-action="AddFriend" asp-route-profileUserId="@Model.Id" asp-route-currentUserId="@currentUser.Id" method="post">
-						<button type="submit" class="btn btn-primary">Add Friend</button>
-					</form>
-				}
-			</div>
-
-		}
-	}
-	if (User.IsInRole("Admin") || currentUser == Model || Model.HasPublicProfile || Model.Friends.Contains(currentUser))
-	{
-		@* <partial name="_ProfilePartial" /> *@
-
-		@* var textPosts = await Model.TextPosts.Include(tp => tp.User).ToListAsync(); *@
-		@* var photoAlbums = await _appDbContext *@
-		@* 	.PhotoAlbums *@
-		@* 	.Include(pa => pa.User) *@
-		@* 	.Include(pa => pa.Photos) *@
-		@* 	.ToListAsync(); *@
-		// await _appDbContext.TextPosts.Include(tp => tp.User);
-
-		// var posts = textPosts.Concat(photoAlbums);
-
-		var posts = new List<ViewPostModel>();
-
-		posts.AddRange(Model.TextPosts.Select(tp => new ViewPostModel
-					{
-						Type = "Text",
-						TextPost = tp,
-						PostedAt = tp.PostedAt
-					}));
-
-		posts.AddRange(Model.PhotoAlbums.Select(pa => new ViewPostModel
-					{
-						Type = "Photo",
-						PhotoAlbum = pa,
-						PostedAt = pa.PostedAt
-					}));
-
-		var sortedPosts = posts.OrderByDescending(p => p.PostedAt);
-		<div class="post-container">
-			<h3>Posts</h3>
-		</div>
-		foreach (var post in sortedPosts)
-		{
-			noPostsShown = false;
-			<partial name="_PostsPartial" model="post" />
-		}
-
-	}
+	</div>
 }
-else if (Model.HasPublicProfile)
-{
-	<div class="post-container">
-		<h1>@Model.FirstName @Model.LastName</h1>
-	</div>
-	@* <partial name="_ProfilePartial" /> *@
-	var posts = new List<ViewPostModel>();
-
-	posts.AddRange(Model.TextPosts.Select(tp => new ViewPostModel
-				{
-					Type = "Text",
-					TextPost = tp,
-					PostedAt = tp.PostedAt
-				}));
-
-	posts.AddRange(Model.PhotoAlbums.Select(pa => new ViewPostModel
-				{
-					Type = "Photo",
-					PhotoAlbum = pa,
-					PostedAt = pa.PostedAt
-				}));
-
-	var sortedPosts = posts.OrderByDescending(p => p.PostedAt);
-
-	<div class="post-container">
-		<h3>Posts</h3>
-	</div>
-
-	foreach (var post in sortedPosts)
-	{
-		noPostsShown = false;
-		<partial name="_PostsPartial" model="post" />
-	}
-
-}
-else
-{
-	<div class="post-container">
-		<h1>@Model.FirstName @Model.LastName</h1>
-	</div>
-	<div class="post-container">
-		<h5>@Model.FirstName has a private profile</h5>
-		<a class="btn btn-primary text-light" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
-		or
-		<a class="btn btn-secondary text-light" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
-		to connect
-
-	</div>
-	noPostsShown = false;
-}
-
-
-@* @if (noPostsShown) *@
-@* { *@
-@* 	<h3>This user has no posts</h3> *@
-@* } *@

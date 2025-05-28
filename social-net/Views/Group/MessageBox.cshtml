@@ -2,8 +2,6 @@
 @using Microsoft.EntityFrameworkCore
 @using social_net.Data
 @model social_net.Models.Group
-@{
-}
 
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
@@ -11,43 +9,54 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
-    var currentUser = await UserManager.GetUserAsync(User);
-    currentUser = await _appDbContext.Users
-        .Include(u => u.GroupsSentMessages)
-        .FirstOrDefaultAsync(u => u.Id.Equals(currentUser.Id));
+	var currentUser = await UserManager.GetUserAsync(User);
+	currentUser = await _appDbContext.Users
+		.Include(u => u.GroupsSentMessages)
+		.FirstOrDefaultAsync(u => u.Id.Equals(currentUser.Id));
 
-    <div class="post-container">
-    <h3> Conversation with <i>@Model.Name</i> group </h3>
-    </div>
-    <section id="messageContainer">
-        @{
-            var allMessages = Model.ReceivedMessages;
-            allMessages.Sort((msg1, msg2) => msg1.SentAt.CompareTo(msg2.SentAt));
-        }
-        <partial name="_MessagePartial" model="allMessages" />
-    </section>
+	<div class="container mt-4">
+		<div class="card shadow-sm p-4">
+			<div class="d-flex justify-content-between align-items-center">
+				<h3 class="text-primary mb-0">Conversation with @Model.Name group</h3>
+			</div>
+		</div>
+	</div>
 
-    <form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-groupId="@Model.Id" method="post">
-        <div id="bottom" class="form-floating mb-3">
-            <input class="form-control" name="messageContent" autocomplete="off" />
-            @* <label>Press Enter to send a new message to <i>@Model.Name</i> group </label> *@
-            <label>Aa </label>
-        </div>
-    </form>
+	<section id="messageContainer" class="messages-section">
+		@{
+			var allMessages = Model.ReceivedMessages;
+			allMessages.Sort((msg1, msg2) => msg1.SentAt.CompareTo(msg2.SentAt));
+		}
+		<partial name="_MessagePartial" model="allMessages" />
+	</section>
+
+	<div class="container mt-4">
+		<div class="card shadow-sm p-4">
+			<form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-groupId="@Model.Id" method="post">
+				<div class="input-group mb-3">
+					<input id="bottom" class="form-control" name="messageContent" autocomplete="off" placeholder="Type a message...">
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-send-fill"></i> Send
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
 }
 
-
-
-
 <style>
-    html {
-        scroll-behavior: auto !important;
-    }
+	html {
+		scroll-behavior: auto !important;
+	}
 </style>
-
 <script>
-    window.onload = () => {
-        const el = document.getElementById("bottom");
-        if (el) el.scrollIntoView({ behavior: "auto" });
-    };
+	window.onload = () => 
+	{
+		const el = document.getElementById("bottom");
+		if (el) el.scrollIntoView(
+			{ 
+				behavior: "auto" 
+			}
+		);
+	};
 </script>

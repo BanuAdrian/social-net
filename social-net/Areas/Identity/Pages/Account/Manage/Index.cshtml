@@ -20,10 +20,9 @@
                 <label asp-for="Input.PhoneNumber" class="form-label"></label>
                 <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
             </div>
-            <div class="form-floating mb-3">
-                <input type="checkbox" asp-for="Input.HasPublicProfile" class="form-check-input" />
-                <label asp-for="Input.HasPublicProfile" class="form-check-label"></label>
-                @* <span asp-validation-for="Input.HasPublicProfile" class="text-danger"></span> *@
+            <div class="form-check form-switch">
+                <input type="checkbox" asp-for="Input.HasPublicProfile" class="form-check-input">
+                <label asp-for="Input.HasPublicProfile" class="form-check-label fw-bold text-dark">Public Profile</label>
             </div>
             <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </form>

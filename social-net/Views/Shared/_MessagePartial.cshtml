@@ -1,15 +1,27 @@
 ﻿@model IEnumerable<IMessage>
 
-<div class="post-container">
-@foreach (var message in Model)
-{
-	<p>
-	<b>
-		<a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@message.Sender.Id">
-		@message.Sender.FirstName @message.Sender.LastName</a>
-	</b> 
-		<span>@message.SentAt.ToString("• MMMM dd, yyyy, HH:mm")</span>: @message.Content
-	</p>
-	<hr />
-}
+<div class="container mt-4">
+    <div class="card shadow-sm p-4">
+        <h3 class="text-primary">Messages</h3>
+        <hr>
+
+        <div class="messages-list">
+            @foreach (var message in Model)
+            {
+                <div class="card p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <b>
+                            <a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@message.Sender.Id"
+                               class="text-decoration-none text-dark">
+                                @message.Sender.FirstName @message.Sender.LastName
+                            </a>
+                        </b>
+                        <span class="text-muted">@message.SentAt.ToString("• MMMM dd, yyyy, HH:mm")</span>
+                    </div>
+
+                    <p class="mt-2 mb-0 text-dark">@message.Content</p>
+                </div>
+            }
+        </div>
+    </div>
 </div>
