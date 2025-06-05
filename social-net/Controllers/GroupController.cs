@@ -17,19 +17,6 @@ namespace social_net.Controllers
             _appDbContext = appDbContext;
         }
 
-        //public IActionResult Index(int groupId)
-        //{
-        //    var group = _appDbContext.Groups
-        //        .Include(gr => gr.GroupMemberships)
-        //        .ThenInclude(gm => gm.Member)
-        //        .FirstOrDefault(gr => gr.Id.Equals(groupId));
-        //    if (group != null)
-        //    {
-        //        return View(group);
-        //    }
-        //    return RedirectToAction("Index", "Home");
-        //}
-
         public IActionResult Index()
         {
             var groups = _appDbContext
@@ -59,7 +46,6 @@ namespace social_net.Controllers
 
 
                 return RedirectToAction("Index", "Group");
-                //return RedirectToAction("Index", "Group", new { groupId = group.Id});
             }
             return View();
         }
@@ -80,9 +66,9 @@ namespace social_net.Controllers
             _appDbContext.SaveChanges();
 
             return RedirectToAction("Index", "Group");
-            //return RedirectToAction("Index", "Group", new { groupId = group.Id });
         }
 
+        [Authorize()]
         public IActionResult MessageBox(int groupId)
         {
             var group = _appDbContext
@@ -90,11 +76,8 @@ namespace social_net.Controllers
                 .Include(g => g.ReceivedMessages)
                 .ThenInclude(msg => msg.Sender)
                 .FirstOrDefault(g => g.Id.Equals(groupId));
-            //var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
-            //Console.WriteLine("Message: profileUserId = " + profileUserId);
             return View(group);
 
-            //return Redirect(Url.RouteUrl(new { controller = "Message", action = "Index", profileUserId = profileUserId }) + "#" + "bottom");
         }
 
         [HttpPost]
@@ -106,16 +89,16 @@ namespace social_net.Controllers
             var currentUser = _appDbContext.Users
                 .Include(u => u.GroupsSentMessages)
                 .FirstOrDefault(u => u.Id.Equals(currentUserId));
-            //Console.WriteLine("Message: profileUserId = " + profileUserId);
-            Console.WriteLine("MESAJ: " + messageContent);
 
-            var msg = new GroupMessage { Sender = currentUser, Group = group, Content = messageContent, SentAt = DateTime.Now };
+            if (messageContent != null)
+            {
+                var msg = new GroupMessage { Sender = currentUser, Group = group, Content = messageContent, SentAt = DateTime.Now };
 
-            _appDbContext.GroupMessages.Add(msg);
-            _appDbContext.SaveChanges();
+                _appDbContext.GroupMessages.Add(msg);
+                _appDbContext.SaveChanges();
+            }
+            
 
-            //return RedirectToAction("Index", "Message", new { profileUserId = profileUserId });
-            //return RedirectToAction("Index", "Message", new { profileUserId = profileUserId, fragment = "bottom" });
             return Redirect(Url.RouteUrl(new { controller = "Group", action = "MessageBox", groupId = groupId}) + "#" + "bottom");
         }
     }

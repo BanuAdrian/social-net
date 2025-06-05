@@ -32,9 +32,6 @@ namespace social_net.Controllers
                 .ThenInclude(p => p.Photos)
                 .ToList()
                 .Find(u => u.Id.Equals(profileUserId));
-            //Console.WriteLine("S-a intrat in functia Index(), userId = " + userId);
-            //Console.WriteLine(user?.FirstName);
-            Console.WriteLine("S-a primit string-ul: " + profileUserId);
             if (profileUser != null)
             {
                 profileUser.PhotoAlbums = profileUser.PhotoAlbums.OrderByDescending(pa => pa.PostedAt).ToList();
@@ -65,7 +62,6 @@ namespace social_net.Controllers
                 _appDbContext.SaveChanges();
             }
 
-            Console.WriteLine("User " + profileUserId + " a primit o cerere de prietenie de la " + currentUserId);
 
             return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
         }
@@ -94,17 +90,16 @@ namespace social_net.Controllers
                 var friendRequestToRemove = _appDbContext.FriendRequests.FirstOrDefault(fr => fr.SenderId == profileUserId && fr.ReceiverId == currentUserId);
                 _appDbContext.FriendRequests.Remove(friendRequestToRemove);
 
-                _appDbContext.SaveChanges();
-            }
+                Notification notification = new Notification()
+                {
+                    User = profileUser,
+                    Content = currentUser.FirstName + " " + currentUser.LastName + " accepted your friend request",
+                    RedirectUrl = Url.Action("Index", "Profile", new { profileUserId = currentUserId })
+                };
 
-            Console.WriteLine("Prietenii lui " + currentUser.Email + ":");
-            foreach (var friendship in currentUser.InitiatedFriendships)
-            {
-                Console.WriteLine(friendship.RecipientUser.Email);
-            }
-            foreach (var friendship in currentUser.ReceivedFriendships)
-            {
-                Console.WriteLine(friendship.InitiatorUser.Email);
+                _appDbContext.Notifications.Add(notification);
+
+                _appDbContext.SaveChanges();
             }
 
             return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
@@ -132,19 +127,33 @@ namespace social_net.Controllers
             return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
         }
 
+        [HttpPost]
+        public IActionResult RemoveFriend(string profileUserId, string currentUserId)
+        {
+            var profileUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(profileUserId));
+            var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
+
+            if (profileUser == null || currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var existingFriendship = _appDbContext
+                .Friendships
+                .FirstOrDefault(fr => (fr.InitiatorUserId == currentUserId && fr.RecipientUserId == profileUserId
+                                || (fr.InitiatorUserId == profileUserId && fr.RecipientUserId == currentUserId)));
+
+            if (existingFriendship != null)
+            {
+                _appDbContext.Friendships.Remove(existingFriendship);
+                _appDbContext.SaveChanges();
+            }
+
+            return RedirectToAction("Index", "Profile", new { profileUserId = profileUserId });
+        }
+
         public IActionResult SearchProfile(string searchTerm)
         {
-            //var user = _appDbContext.Users.ToList().Find(u => u.Id.Equals(searchTerm));
-            ////Console.WriteLine("S-a intrat in functia Index(), userId = " + userId);
-            ////Console.WriteLine(user?.FirstName);
-            //Console.WriteLine("S-a primit string-ul: " + userId);
-            //if (user != null)
-            //{
-            //    return View(user);
-            //}
-            //return RedirectToAction("Index", "Home");
-            //List<User> users = _appDbContext.Users.ToList().FindAll(u => u.FirstName.ToLower().Equals(searchTerm.ToLower()));
-            //users.AddRange(_appDbContext.Users.ToList().FindAll(u => u.LastName.ToLower().Equals(searchTerm.ToLower())));
             var users = _appDbContext
                 .Users
                 .Where(u =>
@@ -166,11 +175,8 @@ namespace social_net.Controllers
             var profileUser = _appDbContext.Users
                 .Include(u => u.SentMessages)
                 .FirstOrDefault(u => u.Id.Equals(profileUserId));
-            //var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
-            //Console.WriteLine("Message: profileUserId = " + profileUserId);
             return View(profileUser);
 
-            //return Redirect(Url.RouteUrl(new { controller = "Message", action = "Index", profileUserId = profileUserId }) + "#" + "bottom");
         }
 
         [HttpPost]
@@ -180,16 +186,12 @@ namespace social_net.Controllers
                 .Include(u => u.SentMessages)
                 .FirstOrDefault(u => u.Id.Equals(profileUserId));
             var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
-            //Console.WriteLine("Message: profileUserId = " + profileUserId);
-            Console.WriteLine("MESAJ: " + messageContent);
 
             var msg = new FriendsMessage { Sender = currentUser, Receiver = profileUser, Content = messageContent, SentAt = DateTime.Now };
 
             _appDbContext.FriendsMessages.Add(msg);
             _appDbContext.SaveChanges();
 
-            //return RedirectToAction("Index", "Message", new { profileUserId = profileUserId });
-            //return RedirectToAction("Index", "Message", new { profileUserId = profileUserId, fragment = "bottom" });
             return Redirect(Url.RouteUrl(new { controller = "Profile", action = "MessageBox", profileUserId = profileUserId }) + "#" + "bottom");
         }
 
@@ -199,12 +201,15 @@ namespace social_net.Controllers
             var currentUser = _appDbContext.Users
                 .FirstOrDefault(u => u.Id.Equals(currentUserId));
 
-            var textPost = new TextPost { User = currentUser, Text = textContent, PostedAt = DateTime.Now };
+            if (textContent != null)
+            {
+                var textPost = new TextPost { User = currentUser, Text = textContent, PostedAt = DateTime.Now };
 
-            _appDbContext.TextPosts.Add(textPost);
-            _appDbContext.SaveChanges();
+                _appDbContext.TextPosts.Add(textPost);
+                _appDbContext.SaveChanges();
+            }
 
-            //return RedirectToAction("Index", "Profile", new { profileUserId = currentUserId });
+
             return Redirect(returnUrl ?? "/");
         }
 
@@ -226,7 +231,6 @@ namespace social_net.Controllers
 
             var userPhotosFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/users-photos", currentUserId);
             Directory.CreateDirectory(userPhotosFolder);
-            //Console.WriteLine(photosFolder);
 
             foreach (var photoFile in photos)
             {
@@ -260,14 +264,25 @@ namespace social_net.Controllers
             {
                 _appDbContext.TextPosts.Remove(textPostToRemove);
 
-                Notification notification = new Notification()
-                {
-                    User = profileUser,
-                    Content = "One of your posts was removed!",
-                    RedirectUrl = Url.Action("Index", "Profile", new { profileUserId = profileUserId })
-                };
+                var adminRoleId = _appDbContext.Roles
+                                .Where(r => r.Name == "Admin")
+                                .Select(r => r.Id)
+                                .FirstOrDefault();
 
-                _appDbContext.Notifications.Add(notification);
+
+                bool isAdmin = _appDbContext.UserRoles.Any(ur => ur.UserId == profileUserId && ur.RoleId == adminRoleId);
+
+                if (!isAdmin)
+                {
+                    Notification notification = new Notification()
+                    {
+                        User = profileUser,
+                        Content = "One of your posts was removed!",
+                        RedirectUrl = Url.Action("Index", "Profile", new { profileUserId = profileUserId })
+                    };
+
+                    _appDbContext.Notifications.Add(notification);
+                }
 
                 _appDbContext.SaveChanges();
             }

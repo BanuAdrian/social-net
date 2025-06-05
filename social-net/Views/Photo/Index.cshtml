@@ -9,7 +9,7 @@
 @{
     var currentUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     bool isOwnPhoto = currentUser != null && Model != null && currentUser == Model.Album.User;
-    bool isFriend = currentUser != null && currentUser.Friends.Contains(currentUser);
+    bool isFriend = currentUser != null && Model != null && currentUser.Friends.Contains(Model.Album.User);
     bool canViewPhoto = isOwnPhoto || isFriend || (Model != null && Model.Album.User.HasPublicProfile);
 }
 
@@ -25,8 +25,12 @@
     {
         <div class="card shadow-sm p-4">
             <div class="d-flex justify-content-between align-items-center">
-                <h1 class="mb-0">Photo by @Model.Album.User.FirstName @Model.Album.User.LastName</h1>
-
+                <h1 class="mb-0">
+                    Photo by <a asp-controller="Profile" asp-action="Index" asp-route-profileUserId="@Model.Album.User.Id" class="text-decoration-none text-dark">
+                        @Model.Album.User.FirstName @Model.Album.User.LastName
+                    </a>
+                </h1>
+                
                 @if (SignInManager.IsSignedIn(User))
                 {
                     <div class="d-flex gap-2 ms-auto">

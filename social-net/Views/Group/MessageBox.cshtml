@@ -11,37 +11,57 @@
 {
 	var currentUser = await UserManager.GetUserAsync(User);
 	currentUser = await _appDbContext.Users
+		.Include(u => u.GroupMemberships)
 		.Include(u => u.GroupsSentMessages)
 		.FirstOrDefaultAsync(u => u.Id.Equals(currentUser.Id));
 
-	<div class="container mt-4">
-		<div class="card shadow-sm p-4">
-			<div class="d-flex justify-content-between align-items-center">
-				<h3 class="text-primary mb-0">Conversation with @Model.Name group</h3>
+	if (!currentUser.Groups.Contains(Model))
+	{
+		<div class="container mt-4">
+			<div class="card shadow-sm p-4 text-center">
+				<h1 class="text-danger">Messaging Unavailable</h1>
+				<p class="text-muted">
+					To send or receive messages, you need to be a member of <a asp-controller="Group" asp-action="Index" asp-route-groupId="@Model.Id"
+																			   class="text-decoration-none text-dark">
+						@Model.Name
+					</a>group.
+				</p>
+
+				
 			</div>
 		</div>
-	</div>
-
-	<section id="messageContainer" class="messages-section">
-		@{
-			var allMessages = Model.ReceivedMessages;
-			allMessages.Sort((msg1, msg2) => msg1.SentAt.CompareTo(msg2.SentAt));
-		}
-		<partial name="_MessagePartial" model="allMessages" />
-	</section>
-
-	<div class="container mt-4">
-		<div class="card shadow-sm p-4">
-			<form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-groupId="@Model.Id" method="post">
-				<div class="input-group mb-3">
-					<input id="bottom" class="form-control" name="messageContent" autocomplete="off" placeholder="Type a message...">
-					<button type="submit" class="btn btn-primary">
-						<i class="bi bi-send-fill"></i> Send
-					</button>
+	} else
+	{
+		<div class="container mt-4">
+			<div class="card shadow-sm p-4">
+				<div class="d-flex justify-content-between align-items-center">
+					<h3 class="text-primary mb-0">Conversation with @Model.Name group</h3>
 				</div>
-			</form>
+			</div>
 		</div>
-	</div>
+
+		<section id="messageContainer" class="messages-section">
+			@{
+				var allMessages = Model.ReceivedMessages;
+				allMessages.Sort((msg1, msg2) => msg1.SentAt.CompareTo(msg2.SentAt));
+			}
+			<partial name="_MessagePartial" model="allMessages" />
+		</section>
+
+		<div class="container mt-4">
+			<div class="card shadow-sm p-4">
+				<form asp-action="SendMessage" asp-route-currentUserId="@currentUser.Id" asp-route-groupId="@Model.Id" method="post">
+					<div class="input-group mb-3">
+						<input id="bottom" class="form-control" name="messageContent" autocomplete="off" placeholder="Type a message...">
+						<button type="submit" class="btn btn-primary">
+							<i class="bi bi-send-fill"></i> Send
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	}
+
 }
 
 <style>

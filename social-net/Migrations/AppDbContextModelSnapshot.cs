@@ -615,13 +615,13 @@ namespace social_net.Migrations
                     b.HasOne("social_net.Models.Group", "Group")
                         .WithMany("GroupMemberships")
                         .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("social_net.Models.User", "Member")
                         .WithMany("GroupMemberships")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Group");
@@ -634,13 +634,13 @@ namespace social_net.Migrations
                     b.HasOne("social_net.Models.Group", "Group")
                         .WithMany("ReceivedMessages")
                         .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("social_net.Models.User", "Sender")
                         .WithMany("GroupsSentMessages")
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Group");
@@ -705,7 +705,7 @@ namespace social_net.Migrations
                     b.HasOne("social_net.Models.User", "User")
                         .WithMany("TextPosts")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");

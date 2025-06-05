@@ -30,10 +30,10 @@
             <div class="form-floating mb-3">
                 @* <input asp-for="Input.Gender" class="form-control" aria-required="true" placeholder="gender" /> *@
                 <select asp-for="Input.Gender" class="form-select">
-                    <option selected disabled>Select an option</option>
+                    @* <option selected disabled>Select an option</option> *@
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
-                    <option>Prefer not to say</option>
+                    <option value="Prefer not to say" selected>Prefer not to say</option>
                 </select>
                 <label asp-for="Input.Gender">Gender</label>
                 

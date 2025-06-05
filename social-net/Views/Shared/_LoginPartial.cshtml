@@ -7,7 +7,7 @@
 @inject social_net.Data.AppDbContext _appDbContext;
 
 
-<ul class="navbar-nav">
+<ul class="navbar-nav flex-grow-0">
 	@if (SignInManager.IsSignedIn(User))
 	{
 		var currentUser = await UserManager
@@ -35,6 +35,7 @@
 		var allGroups = await _appDbContext
 			.Groups
 			.Include(g => g.ReceivedMessages)
+			.ThenInclude(msg => msg.Sender)
 			.ToListAsync();
 
 		var allSentMessages = await _appDbContext.FriendsMessages.Where(msg => msg.Sender == currentUser).ToListAsync();
@@ -48,42 +49,42 @@
 
 		foreach (var friend in currentUser.Friends)
 		{
-			var messages = allSentMessages
-				.Where(m => m.Receiver == friend)
-				.Select(m => new { Msg = m, IsSent = true })
+			var lastMessageWithFriend = allSentMessages
+				.Where(msg => msg.Receiver == friend)
+				@* .Select(m => new { Msg = m, IsSent = true }) *@
 				.Concat(
 					allReceivedMessages
-					.Where(m => m.Sender == friend)
-					.Select(m => new { Msg = m, IsSent = false })
+					.Where(msg => msg.Sender == friend)
+				@* .Select(m => new { Msg = m, IsSent = false }) *@
 				)
-				.OrderByDescending(m => m.Msg.SentAt)
+				.OrderByDescending(m => m.SentAt)
 				.FirstOrDefault();
 
-			if (messages != null)
+			if (lastMessageWithFriend != null)
 			{
-				messagesDictionary["Friends"].Add(friend, messages.Msg);
+				messagesDictionary["Friends"].Add(friend, lastMessageWithFriend);
 			}
 		}
 		foreach (var groupMembership in currentUser.GroupMemberships)
 		{
-			var groupMessages = groupMembership
+			var lastGroupMessage = groupMembership
 				.Group
 				.ReceivedMessages
-				.Where(m => m.Sender == currentUser)
-				.Select(m => new { Msg = m, IsSent = true })
+				.Where(msg => msg.Sender == currentUser)
+				@* .Select(m => new { Msg = m, IsSent = true }) *@
 				.Concat(
 					groupMembership
 					.Group
 					.ReceivedMessages
-					.Where(m => m.Sender != currentUser)
-					.Select(m => new { Msg = m, IsSent = false })
+					.Where(msg => msg.Sender != currentUser)
+				@* .Select(m => new { Msg = m, IsSent = false }) *@
 				)
-				.OrderByDescending(m => m.Msg.SentAt)
+				.OrderByDescending(msg => msg.SentAt)
 				.FirstOrDefault();
 
-			if (groupMessages != null)
+			if (lastGroupMessage != null)
 			{
-				messagesDictionary["Groups"].Add(groupMembership.Group, groupMessages.Msg);
+				messagesDictionary["Groups"].Add(groupMembership.Group, lastGroupMessage);
 			}
 		}
 
@@ -116,11 +117,20 @@
 		@* </li> *@
 
 		<li class="nav-item dropdown">
+			@{
+				var numFriendRequests = currentUser.ReceivedFriendRequests.Count;
+			}
 			<a class="nav-link dropdown-toggle text-light" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
 				<i class="bi bi-person-add"></i>
+				@if (numFriendRequests > 0)
+				{
+					<span class="position-absolute translate-middle badge rounded-pill bg-danger">
+						@numFriendRequests
+					</span>
+				}
 			</a>
 			<ul class="dropdown-menu dropdown-menu-light dropdown-center" aria-labelledby="navbarDarkDropdownMenuLink">
-				@if (currentUser.ReceivedFriendRequests.Count == 0)
+				@if (numFriendRequests == 0)
 				{
 					<li class="dropdown-item d-flex justify-content-between align-items-start">
 						No friend requests
@@ -173,14 +183,28 @@
 				{
 					foreach (var item in mergedMessages)
 					{
-						string contentPreview;
-						if (item.Message.Content.Length > 20)
+						@* string contentPreview; *@
+						@* if (item.Message.Content.Length > 20) *@
+						@* { *@
+						@* 	contentPreview = item.Message.Content.Substring(0, 20) + "..."; *@
+						@* } *@
+						@* else *@
+						@* { *@
+						@* 	contentPreview = item.Message.Content; *@
+						@* } *@
+
+						string contentPreview = "";
+						if (item.Message.Sender == currentUser)
 						{
-							contentPreview = item.Message.Content.Substring(0, 20) + "...";
+							contentPreview = "You: ";
+						} else if (item.Type == "Group")
+						{
+							contentPreview = item.Message.Sender.FirstName + " " + item.Message.Sender.LastName + ": ";
 						}
-						else
+						contentPreview += item.Message.Content;
+						if (contentPreview.Length > 20)
 						{
-							contentPreview = item.Message.Content;
+							contentPreview = contentPreview.Substring(0, 20) + "...";
 						}
 
 						if (item.Type == "Friend")
@@ -189,7 +213,8 @@
 							<li>
 								<a asp-controller="Profile" asp-action="MessageBox" asp-route-profileUserId="@user.Id" class="dropdown-item">
 									<strong>@user.FirstName @user.LastName</strong><br />
-									@((item.Message.Sender == currentUser) ? $"You: {contentPreview}" : contentPreview)
+									@* @((item.Message.Sender == currentUser) ? $"You: {contentPreview}" : contentPreview) *@
+									@contentPreview
 								</a>
 							</li>
 						}
@@ -199,7 +224,8 @@
 							<li>
 								<a asp-controller="Group" asp-action="MessageBox" asp-route-groupId="@group.Id" class="dropdown-item">
 									<strong>@group.Name</strong><br />
-									@((item.Message.Sender == currentUser) ? $"You: {contentPreview}" : $"{item.Message.Sender.FirstName} {item.Message.Sender.LastName}: {contentPreview}")
+									@* @((item.Message.Sender == currentUser) ? $"You: {contentPreview}" : $"{item.Message.Sender.FirstName} {item.Message.Sender.LastName}: {contentPreview}") *@
+									@contentPreview
 								</a>
 							</li>
 						}
@@ -236,7 +262,7 @@
 							@if (!notification.IsRead)
 							{
 								<b>
-									<a class="flex-grow-1 me-3 text-wrap text-decoration-none text-dark"
+									<a class="flex-grow-1 me-5 text-wrap text-decoration-none text-dark"
 									asp-controller="Profile"
 									asp-action="ReadNotification"
 									asp-route-notificationId="@notification.Id">
@@ -245,14 +271,14 @@
 								</b>
 							} else
 							{
-								<a class="flex-grow-1 me-3 text-wrap text-decoration-none text-dark"
+								<a class="flex-grow-1 me-5 text-wrap text-decoration-none text-dark"
 								   asp-controller="Profile"
 								   asp-action="ReadNotification"
 								   asp-route-notificationId="@notification.Id">
 									@notification.Content
 								</a>
 							}
-							<a class="btn btn-sm btn-outline-danger"
+							<a class="btn btn-sm btn-outline-danger ms-3"
 							   asp-controller="Profile"
 							   asp-action="DeleteNotification"
 							   asp-route-notificationId="@notification.Id"

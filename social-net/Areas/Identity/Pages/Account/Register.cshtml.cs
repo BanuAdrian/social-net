@@ -135,7 +135,7 @@ namespace social_net.Areas.Identity.Pages.Account
                 user.FirstName = Input.FirstName;
                 user.LastName = Input.LastName;
                 user.DateOfBirth = Input.DateOfBirth;
-                if (Input.Gender != null && (Input.Gender.Equals("Male") || Input.Gender.Equals("Female")))
+                if (Input.Gender != null)
                 {
                     user.Gender = Input.Gender;
                 }

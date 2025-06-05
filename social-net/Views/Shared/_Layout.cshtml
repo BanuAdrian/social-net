@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -20,7 +23,7 @@
             <div class="container-fluid">
                 <a class="navbar-brand text-light" asp-area="" asp-controller="Home" asp-action="Index">SocialNET</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon">
                         <i class="fas fa-bars" style="color:#fff; font-size:28px;"></i>
                     </span>
@@ -30,17 +33,20 @@
                         <input class="form-control" type="search" name="searchTerm" placeholder="&#128269; Search SocialNET" aria-label="Search">
                         @* <button class="btn btn-outline-success my-2 my-sm-0" type="submit"><i class="bi bi-search"></i></button> *@
                     </form>
-                    <ul class="navbar-nav flex-grow-0">
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index"><i class="bi bi-house-door-fill"></i></a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-light" asp-controller="Group" asp-action="Index"><i class="fa-solid fa-people-group"></i></a>
-                        </li>
-                        @* <li class="nav-item"> *@
-                        @*     <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a> *@
-                        @* </li> *@
-                    </ul>
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <ul class="navbar-nav flex-grow-0">
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index"><i class="bi bi-house-door-fill"></i></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-light" asp-controller="Group" asp-action="Index"><i class="fa-solid fa-people-group"></i></a>
+                            </li>
+                            @* <li class="nav-item"> *@
+                            @*     <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a> *@
+                            @* </li> *@
+                        </ul>
+                    }
                     <partial name="_LoginPartial" />
 
                 </div>

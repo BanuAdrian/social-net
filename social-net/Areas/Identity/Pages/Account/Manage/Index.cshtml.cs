@@ -60,6 +60,23 @@ namespace social_net.Areas.Identity.Pages.Account.Manage
             [Display(Name = "Phone number")]
             public string PhoneNumber { get; set; }
 
+            [Required]
+            [StringLength(50, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [StringLength(50, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+
+            [Required]
+            [Display(Name = "Date of Birth")]
+            public DateOnly DateOfBirth { get; set; }
+
+            [Display(Name = "Gender")]
+            public string Gender { get; set; }
+
             [Display(Name = "Public profile")]
             public bool HasPublicProfile { get; set; }
         }
@@ -74,6 +91,10 @@ namespace social_net.Areas.Identity.Pages.Account.Manage
             Input = new InputModel
             {
                 PhoneNumber = phoneNumber,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                DateOfBirth = user.DateOfBirth,
+                Gender = user.Gender,
                 HasPublicProfile = user.HasPublicProfile
             };
         }
@@ -120,6 +141,35 @@ namespace social_net.Areas.Identity.Pages.Account.Manage
                 user.HasPublicProfile = Input.HasPublicProfile;
                 await _userManager.UpdateAsync(user);
             }
+
+            if (Input.FirstName != user.FirstName)
+            {
+                user.FirstName = Input.FirstName;
+                await _userManager.UpdateAsync(user);
+            }
+
+            if (Input.LastName != user.LastName)
+            {
+                user.LastName = Input.LastName;
+                await _userManager.UpdateAsync(user);
+            }
+
+            if (Input.DateOfBirth != user.DateOfBirth)
+            {
+                user.DateOfBirth = Input.DateOfBirth;
+                await _userManager.UpdateAsync(user);
+            }
+
+            if (Input.Gender != null)
+            {
+                user.Gender = Input.Gender;
+                await _userManager.UpdateAsync(user);
+            } 
+            //else if (Input.Gender != null && Input.Gender.Equals("Prefer not to say"))
+            //{
+            //    user.Gender = null;
+            //    await _userManager.UpdateAsync(user);
+            //}
 
 
             await _signInManager.RefreshSignInAsync(user);

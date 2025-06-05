@@ -95,13 +95,13 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(gm => gm.Member)
             .WithMany(u => u.GroupMemberships)
             .HasForeignKey(gm => gm.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<GroupMembership>()
             .HasOne(gm => gm.Group)
             .WithMany(gr => gr.GroupMemberships)
             .HasForeignKey(gm => gm.GroupId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
 
 
@@ -111,13 +111,13 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(gmsg => gmsg.Sender)
             .WithMany(u => u.GroupsSentMessages)
             .HasForeignKey(gmsg => gmsg.SenderId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<GroupMessage>()
             .HasOne(gmsg => gmsg.Group)
             .WithMany(g => g.ReceivedMessages)
             .HasForeignKey(gmsg => gmsg.GroupId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
 
         builder.Entity<TextPost>().ToTable("TextPosts");
@@ -126,7 +126,7 @@ public class AppDbContext : IdentityDbContext<User>
             .HasOne(t => t.User)
             .WithMany(u => u.TextPosts)
             .HasForeignKey(t => t.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<PhotoAlbum>().ToTable("PhotoAlbums");
         builder.Entity<Photo>().ToTable("Photos");

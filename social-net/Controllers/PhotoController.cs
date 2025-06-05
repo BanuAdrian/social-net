@@ -45,22 +45,27 @@ namespace social_net.Controllers
 
             var currentUser = _appDbContext.Users.FirstOrDefault(u => u.Id.Equals(currentUserId));
 
-            var comment = new PhotoComment { User = currentUser, Text = commentContent, Photo = photo, AddedAt = DateTime.Now, IsAccepted = (currentUser == photo.Album.User) ? true : false };
-
-            _appDbContext.PhotoComments.Add(comment);
-
-            if (currentUser != photo.Album.User)
+            if (commentContent != null)
             {
-                Notification notification = new Notification()
+                var comment = new PhotoComment { User = currentUser, Text = commentContent, Photo = photo, AddedAt = DateTime.Now, IsAccepted = (currentUser == photo.Album.User) ? true : false };
+
+                _appDbContext.PhotoComments.Add(comment);
+
+                if (currentUser != photo.Album.User)
                 {
-                    User = photo.Album.User,
-                    Content = currentUser.FirstName + " " + currentUser.LastName + " added a comment to your photo",
-                    RedirectUrl = Url.Action("Index", "Photo", new { photoId = photoId })
-                };
-                _appDbContext.Notifications.Add(notification);
+                    Notification notification = new Notification()
+                    {
+                        User = photo.Album.User,
+                        Content = currentUser.FirstName + " " + currentUser.LastName + " added a comment to your photo",
+                        RedirectUrl = Url.Action("Index", "Photo", new { photoId = photoId })
+                    };
+                    _appDbContext.Notifications.Add(notification);
+                }
+
+                _appDbContext.SaveChanges();
             }
 
-            _appDbContext.SaveChanges();
+            
 
             return RedirectToAction("Index", "Photo", new { photoId = photoId });
         }
@@ -107,15 +112,24 @@ namespace social_net.Controllers
             {
                 _appDbContext.PhotoComments.Remove(commentToRemove);
 
-                Notification notification = new Notification()
+                var adminRoleId = _appDbContext.Roles
+                                .Where(r => r.Name == "Admin")
+                                .Select(r => r.Id)
+                                .FirstOrDefault();
+
+                bool isAdmin = _appDbContext.UserRoles.Any(ur => ur.UserId == commentToRemove.UserId && ur.RoleId == adminRoleId);
+
+                if (!isAdmin)
                 {
-                    User = commentToRemove.User,
-                    Content = "One of your comments was removed!",
-                    RedirectUrl = Url.Action("Index", "Photo", new {photoId = photoId})
-                };
+                    Notification notification = new Notification()
+                    {
+                        User = commentToRemove.User,
+                        Content = "One of your comments was removed!",
+                        RedirectUrl = Url.Action("Index", "Photo", new { photoId = photoId })
+                    };
 
-                _appDbContext.Notifications.Add(notification);
-
+                    _appDbContext.Notifications.Add(notification);
+                }
                 _appDbContext.SaveChanges();
             }
 
@@ -218,14 +232,24 @@ namespace social_net.Controllers
 
                 _appDbContext.Photos.Remove(photoToRemove);
 
-                Notification notification = new Notification()
-                {
-                    User = profileUser,
-                    Content = "One of your photos was removed!",
-                    RedirectUrl = Url.Action("Index", "Profile", new {profileUserId = profileUserId})
-                };
+                var adminRoleId = _appDbContext.Roles
+                                .Where(r => r.Name == "Admin")
+                                .Select(r => r.Id)
+                                .FirstOrDefault();
 
-                _appDbContext.Notifications.Add(notification);
+                bool isAdmin = _appDbContext.UserRoles.Any(ur => ur.UserId == profileUserId && ur.RoleId == adminRoleId);
+
+                if (!isAdmin)
+                {
+                    Notification notification = new Notification()
+                    {
+                        User = profileUser,
+                        Content = "One of your photos was removed!",
+                        RedirectUrl = Url.Action("Index", "Profile", new { profileUserId = profileUserId })
+                    };
+
+                    _appDbContext.Notifications.Add(notification);
+                }
 
                 _appDbContext.SaveChanges();
             }
